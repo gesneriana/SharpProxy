@@ -1,0 +1,378 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30128.74
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SharpProxy", "SharpProxy\SharpProxy.csproj", "{647E5B0C-66A9-41D0-8476-1ECE094DD02F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "trojan_go_lib", "trojan_go_lib", "{CC1C9354-16AF-42C8-8613-57C0FF352AA1}"
+	ProjectSection(SolutionItems) = preProject
+		trojan_go_lib\.gitignore = trojan_go_lib\.gitignore
+		trojan_go_lib\build.bat = trojan_go_lib\build.bat
+		trojan_go_lib\config.json = trojan_go_lib\config.json
+		trojan_go_lib\Dockerfile = trojan_go_lib\Dockerfile
+		trojan_go_lib\geoip.dat = trojan_go_lib\geoip.dat
+		trojan_go_lib\geosite.dat = trojan_go_lib\geosite.dat
+		trojan_go_lib\go.mod = trojan_go_lib\go.mod
+		trojan_go_lib\go.sum = trojan_go_lib\go.sum
+		trojan_go_lib\LICENSE = trojan_go_lib\LICENSE
+		trojan_go_lib\main.go = trojan_go_lib\main.go
+		trojan_go_lib\README.md = trojan_go_lib\README.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{56D4DC53-8E5E-4290-AAA1-A55ADE3271A7}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{C33A5DBC-39CF-4D02-AA04-3B4D8F85EB0F}"
+	ProjectSection(SolutionItems) = preProject
+		trojan_go_lib\.github\workflows\dev-build.yml = trojan_go_lib\.github\workflows\dev-build.yml
+		trojan_go_lib\.github\workflows\docker-build.yml = trojan_go_lib\.github\workflows\docker-build.yml
+		trojan_go_lib\.github\workflows\gh-pages.yml = trojan_go_lib\.github\workflows\gh-pages.yml
+		trojan_go_lib\.github\workflows\release-build.yml = trojan_go_lib\.github\workflows\release-build.yml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "api", "api", "{A51A6717-82B3-4DC3-8468-AB9398A653D8}"
+	ProjectSection(SolutionItems) = preProject
+		trojan_go_lib\api\api.pb.go = trojan_go_lib\api\api.pb.go
+		trojan_go_lib\api\api.proto = trojan_go_lib\api\api.proto
+		trojan_go_lib\api\client.go = trojan_go_lib\api\client.go
+		trojan_go_lib\api\client_test.go = trojan_go_lib\api\client_test.go
+		trojan_go_lib\api\server.go = trojan_go_lib\api\server.go
+		trojan_go_lib\api\server_test.go = trojan_go_lib\api\server_test.go
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{6DD67C55-3057-4614-84CF-D16200D218BD}"
+	ProjectSection(SolutionItems) = preProject
+		trojan_go_lib\build\api.go = trojan_go_lib\build\api.go
+		trojan_go_lib\build\base.go = trojan_go_lib\build\base.go
+		trojan_go_lib\build\cert.go = trojan_go_lib\build\cert.go
+		trojan_go_lib\build\client.go = trojan_go_lib\build\client.go
+		trojan_go_lib\build\memory.go = trojan_go_lib\build\memory.go
+		trojan_go_lib\build\mysql.go = trojan_go_lib\build\mysql.go
+		trojan_go_lib\build\other.go = trojan_go_lib\build\other.go
+		trojan_go_lib\build\redis.go = trojan_go_lib\build\redis.go
+		trojan_go_lib\build\relay.go = trojan_go_lib\build\relay.go
+		trojan_go_lib\build\router.go = trojan_go_lib\build\router.go
+		trojan_go_lib\build\server.go = trojan_go_lib\build\server.go
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "cert", "cert", "{854150BE-7524-42D2-AB2B-60B003F2F6D4}"
+	ProjectSection(SolutionItems) = preProject
+		trojan_go_lib\cert\cert.go = trojan_go_lib\cert\cert.go
+		trojan_go_lib\cert\cert_test.go = trojan_go_lib\cert\cert_test.go
+		trojan_go_lib\cert\cli.go = trojan_go_lib\cert\cli.go
+		trojan_go_lib\cert\option.go = trojan_go_lib\cert\option.go
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "common", "common", "{6ABD674C-B5B2-4D84-8CBC-28DC503585F8}"
+	ProjectSection(SolutionItems) = preProject
+		trojan_go_lib\common\common.go = trojan_go_lib\common\common.go
+		trojan_go_lib\common\error.go = trojan_go_lib\common\error.go
+		trojan_go_lib\common\io.go = trojan_go_lib\common\io.go
+		trojan_go_lib\common\io_test.go = trojan_go_lib\common\io_test.go
+		trojan_go_lib\common\net.go = trojan_go_lib\common\net.go
+		trojan_go_lib\common\option.go = trojan_go_lib\common\option.go
+		trojan_go_lib\common\sync.go = trojan_go_lib\common\sync.go
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "conf", "conf", "{98E10240-F5C3-4254-828D-1B8967C325FB}"
+	ProjectSection(SolutionItems) = preProject
+		trojan_go_lib\conf\conf.go = trojan_go_lib\conf\conf.go
+		trojan_go_lib\conf\parse.go = trojan_go_lib\conf\parse.go
+		trojan_go_lib\conf\parse_test.go = trojan_go_lib\conf\parse_test.go
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "daemon", "daemon", "{A3B84EFA-2EBF-449A-A721-5BC5E194315D}"
+	ProjectSection(SolutionItems) = preProject
+		trojan_go_lib\daemon\deamon.go = trojan_go_lib\daemon\deamon.go
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{C3DD3F43-643C-4E0C-9F8D-AD927A45E865}"
+	ProjectSection(SolutionItems) = preProject
+		trojan_go_lib\docs\config.toml = trojan_go_lib\docs\config.toml
+		trojan_go_lib\docs\makefile = trojan_go_lib\docs\makefile
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "archetypes", "archetypes", "{F92AD71A-1B2D-4F83-8CB6-AA69D56D405B}"
+	ProjectSection(SolutionItems) = preProject
+		trojan_go_lib\docs\archetypes\default.md = trojan_go_lib\docs\archetypes\default.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "content", "content", "{E4CF1BFA-6E25-4CA8-81B3-4BD9C474C595}"
+	ProjectSection(SolutionItems) = preProject
+		trojan_go_lib\docs\content\_index.md = trojan_go_lib\docs\content\_index.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "advance", "advance", "{951314EA-D65F-483A-B40F-D576258D34FD}"
+	ProjectSection(SolutionItems) = preProject
+		trojan_go_lib\docs\content\advance\_index.md = trojan_go_lib\docs\content\advance\_index.md
+		trojan_go_lib\docs\content\advance\forward.md = trojan_go_lib\docs\content\advance\forward.md
+		trojan_go_lib\docs\content\advance\mux.md = trojan_go_lib\docs\content\advance\mux.md
+		trojan_go_lib\docs\content\advance\nginx-relay.md = trojan_go_lib\docs\content\advance\nginx-relay.md
+		trojan_go_lib\docs\content\advance\relay.md = trojan_go_lib\docs\content\advance\relay.md
+		trojan_go_lib\docs\content\advance\router.md = trojan_go_lib\docs\content\advance\router.md
+		trojan_go_lib\docs\content\advance\websocket.md = trojan_go_lib\docs\content\advance\websocket.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "basic", "basic", "{2D6BA529-90B3-48D6-A12C-4E90794CB6DA}"
+	ProjectSection(SolutionItems) = preProject
+		trojan_go_lib\docs\content\basic\_index.md = trojan_go_lib\docs\content\basic\_index.md
+		trojan_go_lib\docs\content\basic\config.md = trojan_go_lib\docs\content\basic\config.md
+		trojan_go_lib\docs\content\basic\fullconfig.md = trojan_go_lib\docs\content\basic\fullconfig.md
+		trojan_go_lib\docs\content\basic\trojan.md = trojan_go_lib\docs\content\basic\trojan.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "developer", "developer", "{8B959F30-A152-4E3C-B73D-00F0E802E876}"
+	ProjectSection(SolutionItems) = preProject
+		trojan_go_lib\docs\content\developer\_index.md = trojan_go_lib\docs\content\developer\_index.md
+		trojan_go_lib\docs\content\developer\api.md = trojan_go_lib\docs\content\developer\api.md
+		trojan_go_lib\docs\content\developer\build.md = trojan_go_lib\docs\content\developer\build.md
+		trojan_go_lib\docs\content\developer\mux.md = trojan_go_lib\docs\content\developer\mux.md
+		trojan_go_lib\docs\content\developer\overview.md = trojan_go_lib\docs\content\developer\overview.md
+		trojan_go_lib\docs\content\developer\simplesocks.md = trojan_go_lib\docs\content\developer\simplesocks.md
+		trojan_go_lib\docs\content\developer\trojan.md = trojan_go_lib\docs\content\developer\trojan.md
+		trojan_go_lib\docs\content\developer\websocket.md = trojan_go_lib\docs\content\developer\websocket.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "easy", "easy", "{38DE1EB9-DAA6-4BD0-82C3-935729A397E8}"
+	ProjectSection(SolutionItems) = preProject
+		trojan_go_lib\easy\easy.go = trojan_go_lib\easy\easy.go
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "example", "example", "{ADE8DFAC-15FC-425C-916B-3E7B2F1AB96A}"
+	ProjectSection(SolutionItems) = preProject
+		trojan_go_lib\example\client.json = trojan_go_lib\example\client.json
+		trojan_go_lib\example\config.json = trojan_go_lib\example\config.json
+		trojan_go_lib\example\geoip.dat = trojan_go_lib\example\geoip.dat
+		trojan_go_lib\example\geosite.dat = trojan_go_lib\example\geosite.dat
+		trojan_go_lib\example\server.json = trojan_go_lib\example\server.json
+		trojan_go_lib\example\trojan-go.service = trojan_go_lib\example\trojan-go.service
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "log", "log", "{75FCE9A2-D6A6-431C-BE5E-0A54C0ADF557}"
+	ProjectSection(SolutionItems) = preProject
+		trojan_go_lib\log\log.go = trojan_go_lib\log\log.go
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "simplelog", "simplelog", "{4DDADD5D-F2B1-4A33-8771-46D3193D8D27}"
+	ProjectSection(SolutionItems) = preProject
+		trojan_go_lib\log\simplelog\simplelog.go = trojan_go_lib\log\simplelog\simplelog.go
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "golog", "golog", "{2B4C5DEC-B924-4110-8FD0-1A52D7A495F8}"
+	ProjectSection(SolutionItems) = preProject
+		trojan_go_lib\log\golog\golog.go = trojan_go_lib\log\golog\golog.go
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "colorful", "colorful", "{DCF897D2-10BC-4D51-AA2E-8865B42083DF}"
+	ProjectSection(SolutionItems) = preProject
+		trojan_go_lib\log\golog\colorful\colorful.go = trojan_go_lib\log\golog\colorful\colorful.go
+		trojan_go_lib\log\golog\colorful\colorful_test.go = trojan_go_lib\log\golog\colorful\colorful_test.go
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "buffer", "buffer", "{2EB5FAEE-0665-468C-A965-E31EC6F69BDF}"
+	ProjectSection(SolutionItems) = preProject
+		trojan_go_lib\log\golog\buffer\buffer.go = trojan_go_lib\log\golog\buffer\buffer.go
+		trojan_go_lib\log\golog\buffer\buffer_test.go = trojan_go_lib\log\golog\buffer\buffer_test.go
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "protocol", "protocol", "{3F7CECF2-B538-4F80-88CD-BAC2D4548555}"
+	ProjectSection(SolutionItems) = preProject
+		trojan_go_lib\protocol\protocol.go = trojan_go_lib\protocol\protocol.go
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "direct", "direct", "{4929E337-36DC-4DA1-ADDE-66B082D1D807}"
+	ProjectSection(SolutionItems) = preProject
+		trojan_go_lib\protocol\direct\outbound.go = trojan_go_lib\protocol\direct\outbound.go
+		trojan_go_lib\protocol\direct\outbound_test.go = trojan_go_lib\protocol\direct\outbound_test.go
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "http", "http", "{C65F8354-92B0-4B01-9DB7-31D61945C973}"
+	ProjectSection(SolutionItems) = preProject
+		trojan_go_lib\protocol\http\inbound.go = trojan_go_lib\protocol\http\inbound.go
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "simplesocks", "simplesocks", "{F1E56295-F0AF-41EF-9FA6-AC4EDD06B664}"
+	ProjectSection(SolutionItems) = preProject
+		trojan_go_lib\protocol\simplesocks\simplesocks.go = trojan_go_lib\protocol\simplesocks\simplesocks.go
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "socks", "socks", "{4562844A-8803-4C88-966A-9CD8C71B9F1B}"
+	ProjectSection(SolutionItems) = preProject
+		trojan_go_lib\protocol\socks\inbound.go = trojan_go_lib\protocol\socks\inbound.go
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tproxy", "tproxy", "{852AFDFC-5D1D-416A-901F-71540B790ACD}"
+	ProjectSection(SolutionItems) = preProject
+		trojan_go_lib\protocol\tproxy\inbound.go = trojan_go_lib\protocol\tproxy\inbound.go
+		trojan_go_lib\protocol\tproxy\tproxy.go = trojan_go_lib\protocol\tproxy\tproxy.go
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "trojan", "trojan", "{DD80286E-9958-4CA4-88CE-45676958CA2D}"
+	ProjectSection(SolutionItems) = preProject
+		trojan_go_lib\protocol\trojan\inbound.go = trojan_go_lib\protocol\trojan\inbound.go
+		trojan_go_lib\protocol\trojan\outbound.go = trojan_go_lib\protocol\trojan\outbound.go
+		trojan_go_lib\protocol\trojan\packet.go = trojan_go_lib\protocol\trojan\packet.go
+		trojan_go_lib\protocol\trojan\websocket.go = trojan_go_lib\protocol\trojan\websocket.go
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "proxy", "proxy", "{EBE63AE8-D2D5-42ED-A15E-70B76FEEECF6}"
+	ProjectSection(SolutionItems) = preProject
+		trojan_go_lib\proxy\option.go = trojan_go_lib\proxy\option.go
+		trojan_go_lib\proxy\proxy.go = trojan_go_lib\proxy\proxy.go
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "client", "client", "{10F38C4D-3CF4-4D4C-A4D9-EC5604814554}"
+	ProjectSection(SolutionItems) = preProject
+		trojan_go_lib\proxy\client\app.go = trojan_go_lib\proxy\client\app.go
+		trojan_go_lib\proxy\client\client.go = trojan_go_lib\proxy\client\client.go
+		trojan_go_lib\proxy\client\forward.go = trojan_go_lib\proxy\client\forward.go
+		trojan_go_lib\proxy\client\mux.go = trojan_go_lib\proxy\client\mux.go
+		trojan_go_lib\proxy\client\nat.go = trojan_go_lib\proxy\client\nat.go
+		trojan_go_lib\proxy\client\tls.go = trojan_go_lib\proxy\client\tls.go
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "relay", "relay", "{19739A9D-7FA7-462A-BC29-AA66E1A2F0DC}"
+	ProjectSection(SolutionItems) = preProject
+		trojan_go_lib\proxy\relay\relay.go = trojan_go_lib\proxy\relay\relay.go
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "server", "server", "{160B8E39-FFE0-458E-B707-52EFB7E35A5C}"
+	ProjectSection(SolutionItems) = preProject
+		trojan_go_lib\proxy\server\server.go = trojan_go_lib\proxy\server\server.go
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "router", "router", "{476C1B5A-2A1B-415C-9AFF-072321313FD9}"
+	ProjectSection(SolutionItems) = preProject
+		trojan_go_lib\router\router.go = trojan_go_lib\router\router.go
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "mixed", "mixed", "{1D5A85C5-4CB6-4AE3-A26C-1975B574DA40}"
+	ProjectSection(SolutionItems) = preProject
+		trojan_go_lib\router\mixed\geo.go = trojan_go_lib\router\mixed\geo.go
+		trojan_go_lib\router\mixed\geo_test.go = trojan_go_lib\router\mixed\geo_test.go
+		trojan_go_lib\router\mixed\list.go = trojan_go_lib\router\mixed\list.go
+		trojan_go_lib\router\mixed\mixed.go = trojan_go_lib\router\mixed\mixed.go
+		trojan_go_lib\router\mixed\mixed_test.go = trojan_go_lib\router\mixed\mixed_test.go
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "shadow", "shadow", "{6E9C1125-D462-4F5E-82E4-A9B829355920}"
+	ProjectSection(SolutionItems) = preProject
+		trojan_go_lib\shadow\shadow.go = trojan_go_lib\shadow\shadow.go
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "sockopt", "sockopt", "{E3DF899D-0F70-485C-880D-9E8D1ED597C9}"
+	ProjectSection(SolutionItems) = preProject
+		trojan_go_lib\sockopt\darwin.go = trojan_go_lib\sockopt\darwin.go
+		trojan_go_lib\sockopt\linux.go = trojan_go_lib\sockopt\linux.go
+		trojan_go_lib\sockopt\other.go = trojan_go_lib\sockopt\other.go
+		trojan_go_lib\sockopt\sockopt.go = trojan_go_lib\sockopt\sockopt.go
+		trojan_go_lib\sockopt\windows.go = trojan_go_lib\sockopt\windows.go
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "stat", "stat", "{A52FAD2B-B4D2-46C5-BF1E-68F545150C3D}"
+	ProjectSection(SolutionItems) = preProject
+		trojan_go_lib\stat\stat.go = trojan_go_lib\stat\stat.go
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "memory", "memory", "{B3B6282A-07EB-4C36-A69E-BF794D26AA64}"
+	ProjectSection(SolutionItems) = preProject
+		trojan_go_lib\stat\memory\memory.go = trojan_go_lib\stat\memory\memory.go
+		trojan_go_lib\stat\memory\memory_test.go = trojan_go_lib\stat\memory\memory_test.go
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "mysql", "mysql", "{119E3223-1A6F-4624-BC1C-C11C74B5CA0A}"
+	ProjectSection(SolutionItems) = preProject
+		trojan_go_lib\stat\mysql\mysql.go = trojan_go_lib\stat\mysql\mysql.go
+		trojan_go_lib\stat\mysql\mysql_test.go = trojan_go_lib\stat\mysql\mysql_test.go
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "redis", "redis", "{4E05CFA3-AF11-447A-A157-50DEF9D9287E}"
+	ProjectSection(SolutionItems) = preProject
+		trojan_go_lib\stat\redis\redis.go = trojan_go_lib\stat\redis\redis.go
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{0F810EAC-7609-40AE-B8C4-26E23CD7772D}"
+	ProjectSection(SolutionItems) = preProject
+		trojan_go_lib\test\proxy_test.go = trojan_go_lib\test\proxy_test.go
+		trojan_go_lib\test\target.go = trojan_go_lib\test\target.go
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "version", "version", "{8CFC3144-77A6-4CEA-82B3-C1080A2DE923}"
+	ProjectSection(SolutionItems) = preProject
+		trojan_go_lib\version\version.go = trojan_go_lib\version\version.go
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharpProxy.Server.Example", "SharpProxy.Server.Example\SharpProxy.Server.Example.csproj", "{AF21F058-9887-49E4-9989-C25C01954B42}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharpProxy.Client.Example", "SharpProxy.Client.Example\SharpProxy.Client.Example.csproj", "{7EC3A538-207C-4941-A698-862A4FD27A20}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{647E5B0C-66A9-41D0-8476-1ECE094DD02F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{647E5B0C-66A9-41D0-8476-1ECE094DD02F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{647E5B0C-66A9-41D0-8476-1ECE094DD02F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{647E5B0C-66A9-41D0-8476-1ECE094DD02F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AF21F058-9887-49E4-9989-C25C01954B42}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AF21F058-9887-49E4-9989-C25C01954B42}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AF21F058-9887-49E4-9989-C25C01954B42}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AF21F058-9887-49E4-9989-C25C01954B42}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7EC3A538-207C-4941-A698-862A4FD27A20}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7EC3A538-207C-4941-A698-862A4FD27A20}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7EC3A538-207C-4941-A698-862A4FD27A20}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7EC3A538-207C-4941-A698-862A4FD27A20}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{56D4DC53-8E5E-4290-AAA1-A55ADE3271A7} = {CC1C9354-16AF-42C8-8613-57C0FF352AA1}
+		{C33A5DBC-39CF-4D02-AA04-3B4D8F85EB0F} = {56D4DC53-8E5E-4290-AAA1-A55ADE3271A7}
+		{A51A6717-82B3-4DC3-8468-AB9398A653D8} = {CC1C9354-16AF-42C8-8613-57C0FF352AA1}
+		{6DD67C55-3057-4614-84CF-D16200D218BD} = {CC1C9354-16AF-42C8-8613-57C0FF352AA1}
+		{854150BE-7524-42D2-AB2B-60B003F2F6D4} = {CC1C9354-16AF-42C8-8613-57C0FF352AA1}
+		{6ABD674C-B5B2-4D84-8CBC-28DC503585F8} = {CC1C9354-16AF-42C8-8613-57C0FF352AA1}
+		{98E10240-F5C3-4254-828D-1B8967C325FB} = {CC1C9354-16AF-42C8-8613-57C0FF352AA1}
+		{A3B84EFA-2EBF-449A-A721-5BC5E194315D} = {CC1C9354-16AF-42C8-8613-57C0FF352AA1}
+		{C3DD3F43-643C-4E0C-9F8D-AD927A45E865} = {CC1C9354-16AF-42C8-8613-57C0FF352AA1}
+		{F92AD71A-1B2D-4F83-8CB6-AA69D56D405B} = {C3DD3F43-643C-4E0C-9F8D-AD927A45E865}
+		{E4CF1BFA-6E25-4CA8-81B3-4BD9C474C595} = {C3DD3F43-643C-4E0C-9F8D-AD927A45E865}
+		{951314EA-D65F-483A-B40F-D576258D34FD} = {E4CF1BFA-6E25-4CA8-81B3-4BD9C474C595}
+		{2D6BA529-90B3-48D6-A12C-4E90794CB6DA} = {E4CF1BFA-6E25-4CA8-81B3-4BD9C474C595}
+		{8B959F30-A152-4E3C-B73D-00F0E802E876} = {E4CF1BFA-6E25-4CA8-81B3-4BD9C474C595}
+		{38DE1EB9-DAA6-4BD0-82C3-935729A397E8} = {CC1C9354-16AF-42C8-8613-57C0FF352AA1}
+		{ADE8DFAC-15FC-425C-916B-3E7B2F1AB96A} = {CC1C9354-16AF-42C8-8613-57C0FF352AA1}
+		{75FCE9A2-D6A6-431C-BE5E-0A54C0ADF557} = {CC1C9354-16AF-42C8-8613-57C0FF352AA1}
+		{4DDADD5D-F2B1-4A33-8771-46D3193D8D27} = {75FCE9A2-D6A6-431C-BE5E-0A54C0ADF557}
+		{2B4C5DEC-B924-4110-8FD0-1A52D7A495F8} = {75FCE9A2-D6A6-431C-BE5E-0A54C0ADF557}
+		{DCF897D2-10BC-4D51-AA2E-8865B42083DF} = {2B4C5DEC-B924-4110-8FD0-1A52D7A495F8}
+		{2EB5FAEE-0665-468C-A965-E31EC6F69BDF} = {2B4C5DEC-B924-4110-8FD0-1A52D7A495F8}
+		{3F7CECF2-B538-4F80-88CD-BAC2D4548555} = {CC1C9354-16AF-42C8-8613-57C0FF352AA1}
+		{4929E337-36DC-4DA1-ADDE-66B082D1D807} = {3F7CECF2-B538-4F80-88CD-BAC2D4548555}
+		{C65F8354-92B0-4B01-9DB7-31D61945C973} = {3F7CECF2-B538-4F80-88CD-BAC2D4548555}
+		{F1E56295-F0AF-41EF-9FA6-AC4EDD06B664} = {3F7CECF2-B538-4F80-88CD-BAC2D4548555}
+		{4562844A-8803-4C88-966A-9CD8C71B9F1B} = {3F7CECF2-B538-4F80-88CD-BAC2D4548555}
+		{852AFDFC-5D1D-416A-901F-71540B790ACD} = {3F7CECF2-B538-4F80-88CD-BAC2D4548555}
+		{DD80286E-9958-4CA4-88CE-45676958CA2D} = {3F7CECF2-B538-4F80-88CD-BAC2D4548555}
+		{EBE63AE8-D2D5-42ED-A15E-70B76FEEECF6} = {CC1C9354-16AF-42C8-8613-57C0FF352AA1}
+		{10F38C4D-3CF4-4D4C-A4D9-EC5604814554} = {EBE63AE8-D2D5-42ED-A15E-70B76FEEECF6}
+		{19739A9D-7FA7-462A-BC29-AA66E1A2F0DC} = {EBE63AE8-D2D5-42ED-A15E-70B76FEEECF6}
+		{160B8E39-FFE0-458E-B707-52EFB7E35A5C} = {EBE63AE8-D2D5-42ED-A15E-70B76FEEECF6}
+		{476C1B5A-2A1B-415C-9AFF-072321313FD9} = {CC1C9354-16AF-42C8-8613-57C0FF352AA1}
+		{1D5A85C5-4CB6-4AE3-A26C-1975B574DA40} = {476C1B5A-2A1B-415C-9AFF-072321313FD9}
+		{6E9C1125-D462-4F5E-82E4-A9B829355920} = {CC1C9354-16AF-42C8-8613-57C0FF352AA1}
+		{E3DF899D-0F70-485C-880D-9E8D1ED597C9} = {CC1C9354-16AF-42C8-8613-57C0FF352AA1}
+		{A52FAD2B-B4D2-46C5-BF1E-68F545150C3D} = {CC1C9354-16AF-42C8-8613-57C0FF352AA1}
+		{B3B6282A-07EB-4C36-A69E-BF794D26AA64} = {A52FAD2B-B4D2-46C5-BF1E-68F545150C3D}
+		{119E3223-1A6F-4624-BC1C-C11C74B5CA0A} = {A52FAD2B-B4D2-46C5-BF1E-68F545150C3D}
+		{4E05CFA3-AF11-447A-A157-50DEF9D9287E} = {A52FAD2B-B4D2-46C5-BF1E-68F545150C3D}
+		{0F810EAC-7609-40AE-B8C4-26E23CD7772D} = {CC1C9354-16AF-42C8-8613-57C0FF352AA1}
+		{8CFC3144-77A6-4CEA-82B3-C1080A2DE923} = {CC1C9354-16AF-42C8-8613-57C0FF352AA1}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {0BE6E5C0-2176-4759-B811-6534F48DF0CE}
+	EndGlobalSection
+EndGlobal
