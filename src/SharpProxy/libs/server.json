@@ -15,8 +15,9 @@
     "mux": {
         "enabled": true
     },
-    "ssl": {
-        "cert": "server.crt",
-        "key": "server.key"
-    }
+  "ssl": {
+    "cert": "server.crt",
+    "key": "server.key",
+    "sni": "ca.kizuna.top"
+  }
 }

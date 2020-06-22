@@ -48,41 +48,6 @@ namespace SharpProxy
         }
 
         /// <summary>
-        /// 申请证书
-        /// </summary>
-        /// <param name="Domain"></param>
-        /// <param name="Email"></param>
-        public static void RequestCertWithJson(string Domain, string Email)
-        {
-            // 中文字符会导致乱码,因为封送字符串是用ANSI编码, 所以需要先base64编码, 
-            // *C.char 类型对UTF-8和Unicode支持不太好, GoString更是会导致程序崩溃(我已经在ubuntu和windows中测试过)
-            var config = JsonConvert.SerializeObject(new { Domain, Email });
-            var b64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(config));
-            Console.WriteLine(b64);
-            var ptr = Marshal.StringToHGlobalAnsi(b64);
-            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
-            {
-                if (Environment.Is64BitProcess)
-                {
-                    NativeDllWindows64.RequestCertWithJson(ptr);
-                }
-                else
-                {
-                    NativeDllWindows32.RequestCertWithJson(ptr);
-                }
-            }
-            else if (Environment.OSVersion.Platform == PlatformID.Unix)
-            {
-                if (Environment.Is64BitProcess)
-                {
-                    NativeDllLinux64.RequestCertWithJson(ptr);
-                }
-            }
-
-            Marshal.FreeHGlobal(ptr);
-        }
-
-        /// <summary>
         /// 停止Trojan go
         /// </summary>
         public static void Stop()

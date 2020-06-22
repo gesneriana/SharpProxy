@@ -1,3 +1,5 @@
+// +build server full mini
+
 package build
 
 import (

@@ -1,96 +1,67 @@
 package proxy
 
 import (
+	"flag"
 	"io/ioutil"
-	"os"
-	"sync"
+	"strings"
 
-	"github.com/p4gefau1t/trojan-go/common"
-	"github.com/p4gefau1t/trojan-go/conf"
+	"github.com/p4gefau1t/trojan-go/constant"
 	"github.com/p4gefau1t/trojan-go/log"
+	"github.com/p4gefau1t/trojan-go/option"
 )
 
-// CloseChan 特殊的channel，它不能被写入任何数据，只有通过close()函数进行关闭操作，才能进行输出操作,不占用任何内存
-var closeChan chan struct{}
-var lock sync.Mutex
-var _proxyOption *proxyOption
+var _proxy *Proxy
 
-type proxyOption struct {
-	args *string
-	common.OptionHandler
+type Option struct {
+	path *string
 }
 
-func (*proxyOption) Name() string {
-	return "proxy"
+func (o *Option) Name() string {
+	return Name
 }
 
-func (*proxyOption) Priority() int {
+func (o *Option) Handle() error {
+	data, err := ioutil.ReadFile(*o.path)
+	if err != nil {
+		log.Fatal(err)
+	}
+	isJSON := false
+	if strings.HasSuffix(*o.path, ".json") {
+		isJSON = true
+	} else if strings.HasSuffix(*o.path, ".yaml") || strings.HasSuffix(*o.path, ".yml") {
+		isJSON = false
+	} else {
+		log.Fatal("unsupported filename suffix", *o.path, ". use .yaml or .json instead.")
+	}
+	log.Info("trojan-go", constant.Version, "initializing")
+	proxy, err := NewProxyFromConfigData(data, isJSON)
+	_proxy = proxy
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = proxy.Run()
+	if err != nil {
+		log.Fatal(err)
+	}
+	return nil
+}
+
+func (o *Option) Priority() int {
 	return 0
 }
 
-func (c *proxyOption) Handle() error {
-	log.Info("Trojan-Go", common.Version, "initializing")
-	log.Info("loading config file from", *c.args)
-
-	//exit code 23 stands for initializing error, and systemd will not trying to restart it
-	data, err := ioutil.ReadFile(*c.args)
-	if err != nil {
-		log.Error(common.NewError("failed to read config file").Base(err))
-		os.Exit(23)
-	}
-	config, err := conf.ParseJSON(data)
-	if err != nil {
-		log.Error(common.NewError("failed to parse config file").Base(err))
-		os.Exit(23)
-	}
-	proxy, err := NewProxy(config)
-	if err != nil {
-		log.Error(common.NewError("failed to launch proxy").Base(err))
-		os.Exit(23)
-	}
-	errChan := make(chan error)
-	go func() {
-		log.Info("trojan-go is started.")
-		errChan <- proxy.Run()
-	}()
-
-	closeChan = make(chan struct{})
-	select {
-	case <-closeChan:
-		proxy.Close()
-		log.Info("closeChan close.")
-		return nil
-	case err := <-errChan:
-		log.Error(err)
-		return err
-	}
-}
-
-func SetProxyConfigFile(config string) {
-	_proxyOption.args = &config
-}
-
 func init() {
-	Register()
+	option.RegisterHandler(&Option{
+		path: flag.String("config", "config.json", "Trojan-Go config filename (.yaml/.json)"),
+	})
 }
 
-func Register() {
-	var c = common.GetProgramDir() + "/config.json"
-	_proxyOption = &proxyOption{
-		args: &c,
-	}
-	common.RegisterOptionHandler(_proxyOption)
+func (o *Option) SetConfigJsonPath(configPath string) {
+	o.path = &configPath
 }
 
-func CloseChan() {
-	lock.Lock()
-	defer lock.Unlock()
-
-	if closeChan != nil {
-		close(closeChan)
-		closeChan = nil
-		log.Info("trojan-go Stop.")
-	} else {
-		log.Info("trojan-go is Stoped.")
+func (o *Option) Close() {
+	if _proxy != nil {
+		_proxy.Close()
 	}
 }

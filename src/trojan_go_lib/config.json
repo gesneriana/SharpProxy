@@ -2,7 +2,7 @@
     "run_type": "client",
     "local_addr": "127.0.0.1",
     "local_port": 1082,
-    "remote_addr": "jp.kizuna.top",
+    "remote_addr": "ca.kizuna.top",
     "remote_port": 443,
     "password": [
         "gesneriana"
@@ -10,7 +10,7 @@
     "websocket": {
         "enabled": true,
         "path": "/web",
-        "hostname": "jp.kizuna.top"
+        "hostname": "ca.kizuna.top"
     },
     "mux": {
         "enabled": true
@@ -25,6 +25,6 @@
     },
     "ssl": {
         "fingerprint": "firefox",
-        "sni": "jp.kizuna.top"
+        "sni": "ca.kizuna.top"
     }
 }

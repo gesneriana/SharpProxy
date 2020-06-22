@@ -1,30 +1,32 @@
 {
     "run_type": "client",
     "local_addr": "127.0.0.1",
-    "local_port": 1082,
-    "remote_addr": "jp.kizuna.top",
+    "local_port": 1080,
+    "remote_addr": "your_server",
     "remote_port": 443,
     "password": [
-        "gesneriana"
+        "your_password"
     ],
-    "websocket": {
-        "enabled": true,
-        "path": "/web",
-        "hostname": "jp.kizuna.top"
+    "ssl": {
+        "sni": "your-domain-name.com"
     },
-    "mux": {
+    "mux" :{
         "enabled": true
     },
-    "router": {
+    "router":{
         "enabled": true,
         "bypass": [
             "geoip:cn",
             "geoip:private",
-            "geosite:cn"
-        ]
-    },
-    "ssl": {
-        "fingerprint": "firefox",
-        "sni": "jp.kizuna.top"
+            "geosite:cn",
+            "geosite:geolocation-cn"
+        ],
+        "block": [
+            "geosite:category-ads"
+        ],
+        "proxy": [
+            "geosite:geolocation-!cn"
+        ],
+        "default_policy": "proxy"
     }
 }

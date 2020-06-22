@@ -8,28 +8,25 @@ import (
 )
 
 type RewindReader struct {
-	io.Reader
-	io.ByteReader
-
 	rawReader  io.Reader
 	buf        []byte
 	bufReadIdx int
-	rewinded   bool
-	buffered   bool
+	rewound    bool
+	buffering  bool
 	bufferSize int
 }
 
 func (r *RewindReader) Read(p []byte) (int, error) {
-	if r.rewinded {
+	if r.rewound {
 		if len(r.buf) > r.bufReadIdx {
 			n := copy(p, r.buf[r.bufReadIdx:])
 			r.bufReadIdx += n
 			return n, nil
 		}
-		r.rewinded = false //all buffered content has been read
+		r.rewound = false //all buffering content has been read
 	}
 	n, err := r.rawReader.Read(p)
-	if r.buffered {
+	if r.buffering {
 		r.buf = append(r.buf, p[:n]...)
 		if len(r.buf) > r.bufferSize*2 {
 			log.Debug("read too many bytes!")
@@ -65,78 +62,69 @@ func (r *RewindReader) Rewind() {
 	if r.bufferSize == 0 {
 		panic("has no buffer")
 	}
-	r.rewinded = true
+	r.rewound = true
 	r.bufReadIdx = 0
 }
 
 func (r *RewindReader) StopBuffering() {
-	r.buffered = false
+	r.buffering = false
 }
 
 func (r *RewindReader) SetBufferSize(size int) {
 	if size == 0 { //disable buffering
-		if !r.buffered {
-			panic("already disabled")
+		if !r.buffering {
+			panic("reader is already disabled")
 		}
-		r.buffered = false
+		r.buffering = false
 		r.buf = nil
 		r.bufReadIdx = 0
 		r.bufferSize = 0
 	} else {
-		if r.buffered {
-			panic("is already buffering")
+		if r.buffering {
+			panic("reader is already buffering")
 		}
-		r.buffered = true
+		r.buffering = true
 		r.bufReadIdx = 0
 		r.bufferSize = size
 		r.buf = make([]byte, 0, size)
 	}
 }
 
-func NewRewindReader(r io.Reader) *RewindReader {
-	return &RewindReader{
-		rawReader: r,
-	}
-}
-
-type RewindReadWriteCloser struct {
-	rawRWC io.ReadWriteCloser
+type RewindConn struct {
+	net.Conn
 	*RewindReader
 }
 
-func (rwc *RewindReadWriteCloser) Write(p []byte) (int, error) {
-	return rwc.rawRWC.Write(p)
-}
-
-func (rwc *RewindReadWriteCloser) Close() error {
-	return rwc.rawRWC.Close()
-}
-
-func NewRewindReadWriteCloser(rwc io.ReadWriteCloser) *RewindReadWriteCloser {
-	return &RewindReadWriteCloser{
-		rawRWC:       rwc,
-		RewindReader: NewRewindReader(rwc),
-	}
-}
-
-func ReadByte(r io.Reader) (byte, error) {
-	buf := [1]byte{}
-	_, err := r.Read(buf[:])
-	return buf[0], err
-}
-
-type RewindConn struct {
-	R *RewindReader
-	net.Conn
-}
-
 func (c *RewindConn) Read(p []byte) (int, error) {
-	return c.R.Read(p)
+	return c.RewindReader.Read(p)
 }
 
 func NewRewindConn(conn net.Conn) *RewindConn {
 	return &RewindConn{
 		Conn: conn,
-		R:    NewRewindReader(conn),
+		RewindReader: &RewindReader{
+			rawReader: conn,
+		},
 	}
+}
+
+type StickyWriter struct {
+	rawWriter   io.Writer
+	writeBuffer []byte
+	MaxBuffered int
+}
+
+func (w *StickyWriter) Write(p []byte) (int, error) {
+	if w.MaxBuffered > 0 {
+		w.MaxBuffered--
+		w.writeBuffer = append(w.writeBuffer, p...)
+		if w.MaxBuffered != 0 {
+			return len(p), nil
+		}
+		w.MaxBuffered = 0
+		_, err := w.rawWriter.Write(w.writeBuffer)
+		w.writeBuffer = nil
+		return len(p), err
+	}
+	return w.rawWriter.Write(p)
 }

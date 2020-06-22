@@ -26,18 +26,6 @@ namespace SharpProxy.Server.Example
                 File.WriteAllText(runConfigFile, serverConfigJson);
             }
 
-            var certFile = Environment.CurrentDirectory + "/server.crt";
-            if (!File.Exists(certFile))
-            {
-                Console.WriteLine("请输入域名(不带https/http),例如: jp.kizuna.top");
-                var domain = Console.ReadLine();
-                if (string.IsNullOrWhiteSpace(domain))
-                {
-                    domain = "jp.kizuna.top";
-                }
-                SharpProxyTrojanGo.RequestCertWithJson(domain, "981941940@qq.com");
-            }
-
             var dir = Environment.CurrentDirectory + "/libs";
             SharpProxyTrojanGo.Start(dir);
 

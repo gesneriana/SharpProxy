@@ -79,10 +79,6 @@ extern "C" {
 
 extern void Start(char* p0);
 
-// RequestCertWithJson 申请证书
-
-extern void RequestCertWithJson(char* p0);
-
 // Stop 停止客户端代理服务
 
 extern void Stop();

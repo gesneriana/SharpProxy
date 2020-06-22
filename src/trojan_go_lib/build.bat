@@ -1,2 +1,2 @@
-echo 请确保你已经安装go 1.12+ 并且成功安装gcc (Windows中是MingW)
-go build -buildmode=c-shared -o trojan_go_64.dll main.go
+echo 璇风‘淇濅綘宸茬粡瀹夎go 1.12+ 骞朵笖鎴愬姛瀹夎gcc (Windows涓槸MingW)
+go build -buildmode=c-shared -tags "full" -ldflags="-s -w" -o trojan_go_64.dll main.go
