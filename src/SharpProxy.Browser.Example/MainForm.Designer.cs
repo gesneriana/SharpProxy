@@ -28,23 +28,26 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.panel1 = new System.Windows.Forms.Panel();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
+            this.panelBrowser = new System.Windows.Forms.Panel();
             this.btnStart = new System.Windows.Forms.Button();
             this.txtUrl = new System.Windows.Forms.TextBox();
             this.btnLoad = new System.Windows.Forms.Button();
             this.btnExport = new System.Windows.Forms.Button();
+            this.btnEditRule = new System.Windows.Forms.Button();
+            this.cbxBookConfig = new System.Windows.Forms.ComboBox();
             this.SuspendLayout();
             // 
-            // panel1
+            // panelBrowser
             // 
-            this.panel1.Location = new System.Drawing.Point(12, 57);
-            this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(859, 483);
-            this.panel1.TabIndex = 0;
+            this.panelBrowser.Location = new System.Drawing.Point(12, 57);
+            this.panelBrowser.Name = "panelBrowser";
+            this.panelBrowser.Size = new System.Drawing.Size(859, 483);
+            this.panelBrowser.TabIndex = 0;
             // 
             // btnStart
             // 
-            this.btnStart.Location = new System.Drawing.Point(12, 12);
+            this.btnStart.Location = new System.Drawing.Point(281, 8);
             this.btnStart.Name = "btnStart";
             this.btnStart.Size = new System.Drawing.Size(75, 23);
             this.btnStart.TabIndex = 1;
@@ -54,24 +57,24 @@
             // 
             // txtUrl
             // 
-            this.txtUrl.Location = new System.Drawing.Point(93, 12);
+            this.txtUrl.Location = new System.Drawing.Point(371, 8);
             this.txtUrl.Name = "txtUrl";
             this.txtUrl.Size = new System.Drawing.Size(338, 21);
             this.txtUrl.TabIndex = 2;
             // 
             // btnLoad
             // 
-            this.btnLoad.Location = new System.Drawing.Point(437, 12);
+            this.btnLoad.Location = new System.Drawing.Point(715, 8);
             this.btnLoad.Name = "btnLoad";
             this.btnLoad.Size = new System.Drawing.Size(75, 23);
             this.btnLoad.TabIndex = 3;
-            this.btnLoad.Text = "加载/刷新";
+            this.btnLoad.Text = "加载";
             this.btnLoad.UseVisualStyleBackColor = true;
             this.btnLoad.Click += new System.EventHandler(this.btnLoad_Click);
             // 
             // btnExport
             // 
-            this.btnExport.Location = new System.Drawing.Point(527, 12);
+            this.btnExport.Location = new System.Drawing.Point(796, 8);
             this.btnExport.Name = "btnExport";
             this.btnExport.Size = new System.Drawing.Size(75, 23);
             this.btnExport.TabIndex = 4;
@@ -79,16 +82,38 @@
             this.btnExport.UseVisualStyleBackColor = true;
             this.btnExport.Click += new System.EventHandler(this.btnExport_Click);
             // 
+            // btnEditRule
+            // 
+            this.btnEditRule.Location = new System.Drawing.Point(12, 8);
+            this.btnEditRule.Name = "btnEditRule";
+            this.btnEditRule.Size = new System.Drawing.Size(75, 23);
+            this.btnEditRule.TabIndex = 5;
+            this.btnEditRule.Text = "编辑规则";
+            this.btnEditRule.UseVisualStyleBackColor = true;
+            this.btnEditRule.Click += new System.EventHandler(this.btnEditRule_Click);
+            // 
+            // cbxBookConfig
+            // 
+            this.cbxBookConfig.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cbxBookConfig.FormattingEnabled = true;
+            this.cbxBookConfig.Location = new System.Drawing.Point(104, 9);
+            this.cbxBookConfig.Name = "cbxBookConfig";
+            this.cbxBookConfig.Size = new System.Drawing.Size(171, 20);
+            this.cbxBookConfig.TabIndex = 6;
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(883, 552);
+            this.Controls.Add(this.cbxBookConfig);
+            this.Controls.Add(this.btnEditRule);
             this.Controls.Add(this.btnExport);
             this.Controls.Add(this.btnLoad);
             this.Controls.Add(this.txtUrl);
             this.Controls.Add(this.btnStart);
-            this.Controls.Add(this.panel1);
+            this.Controls.Add(this.panelBrowser);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "MainForm";
             this.Text = "CefSharpExample";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainForm_FormClosing);
@@ -101,11 +126,13 @@
 
         #endregion
 
-        private System.Windows.Forms.Panel panel1;
+        private System.Windows.Forms.Panel panelBrowser;
         private System.Windows.Forms.Button btnStart;
         private System.Windows.Forms.TextBox txtUrl;
         private System.Windows.Forms.Button btnLoad;
         private System.Windows.Forms.Button btnExport;
+        private System.Windows.Forms.Button btnEditRule;
+        private System.Windows.Forms.ComboBox cbxBookConfig;
     }
 }
 

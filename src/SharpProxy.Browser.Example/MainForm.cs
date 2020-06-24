@@ -13,6 +13,8 @@ using System.Windows.Forms;
 using HtmlAgilityPack;
 using HtmlDocument = HtmlAgilityPack.HtmlDocument;
 using SharpProxy.Browser.Example.Model;
+using SharpProxy.Browser.Example.Utils;
+using System.Threading;
 
 namespace SharpProxy.Browser.Example
 {
@@ -49,9 +51,22 @@ namespace SharpProxy.Browser.Example
             // Create a browser component
             chromeBrowser = new ChromiumWebBrowser("https://www.google.com/");
             // Add it to the form and fill it to the form window.
-            this.panel1.Controls.Add(chromeBrowser);
+            this.panelBrowser.Controls.Add(chromeBrowser);
             chromeBrowser.Dock = DockStyle.Fill;
             chromeBrowser.LifeSpanHandler = new OpenPageSelf(); // 不用新窗口打开url
+            chromeBrowser.KeyboardHandler = new CefKeyBoardHander();
+            this.Width = 1024;
+            this.Height = 800;
+
+            var bookConfigs = BooksUtils.GetAllBookConfig();
+            bookConfigs.ForEach(x =>
+            {
+                x.BookName = $"{x.BookName}-{x.Author}";
+            });
+            cbxBookConfig.DataSource = bookConfigs;
+            cbxBookConfig.DisplayMember = nameof(Book.BookName);
+            cbxBookConfig.ValueMember = nameof(Book.Id);
+            cbxBookConfig.SelectedIndex = 0;
         }
 
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
@@ -61,71 +76,108 @@ namespace SharpProxy.Browser.Example
 
         private void MainForm_SizeChanged(object sender, EventArgs e)
         {
-            this.panel1.Left = 10;
-            this.panel1.Width = this.Width - 40;
-            this.panel1.Top = 40;
-            this.panel1.Height = this.Height - 90;
+            this.panelBrowser.Left = 10;
+            this.panelBrowser.Width = this.Width - 40;
+            this.panelBrowser.Top = 40;
+            this.panelBrowser.Height = this.Height - 90;
         }
 
         private void btnStart_Click(object sender, EventArgs e)
         {
-            var html = chromeBrowser.GetMainFrame().GetSourceAsync().GetAwaiter().GetResult();
-            var doc = new HtmlDocument();
-            doc.LoadHtml(html);
-            // 不同网站的HTML文档结构不同, 自行修改 GetElementbyId 的参数
-            var chapterNode = doc.GetElementbyId("j_chapterBox");
-            if (chapterNode == null)
+            if (cbxBookConfig.DataSource is List<Book> books)
             {
-                Console.WriteLine("请确认打开了第一章的url");
-                return; // 完结
+                var id = cbxBookConfig.SelectedValue as int? ?? 0;
+                if (id == 0)
+                {
+                    Console.WriteLine("请选择有效的书名");
+                    return;
+                }
+                var book = books.FirstOrDefault(x => x.Id == id);
+                this.panelBrowser.Tag = book;
+
+                // 读取最新的爬虫规则
+                var rules = CrawlerRuleUtils.GetAllCrawlerRules();
+                cbxBookConfig.Tag = rules;
+
+                chromeBrowser.FrameLoadEnd += ChromeBrowser_FrameLoadEnd;
+                chromeBrowser.Load(book.StartUrl);
             }
-
-            var chapterTitleText = chapterNode.Descendants().Where(x => x.HasClass("j_chapterName")).FirstOrDefault()?.InnerText ?? string.Empty;
-            var chapterHtml = chapterNode?.OuterHtml ?? string.Empty;
-            var chapterText = chapterNode?.InnerText ?? string.Empty;
-
-            // 写入sqlite数据库中
-            var books = BooksUtils.AddBooks(new List<Book>() { new Book() { BookName = "道君", Author = "跃千愁" } });
-            var book = books.FirstOrDefault(x => x.BookName.Equals("道君") && x.Author.Equals("跃千愁"));
-            if (book.Id <= 0)
-            {
-                return;
-            }
-            this.panel1.Tag = book;
-            ChaptersUtils.AddChapters(new List<Chapter> { new Chapter() { ChapterTitle = chapterTitleText, BookId = book.Id, Text = chapterText, Html = chapterHtml } });
-
-            chromeBrowser.FrameLoadEnd += ChromeBrowser_FrameLoadEnd;
-
-            // 翻页, j_chapterNext
-            chromeBrowser.GetMainFrame().ExecuteJavaScriptAsync("document.getElementById('j_chapterNext').click();");
         }
 
         private void ChromeBrowser_FrameLoadEnd(object sender, FrameLoadEndEventArgs e)
         {
+            // 浏览器刚打开, 还没有开始抓取网页
+            var book = this.panelBrowser.Tag as Book ?? new Book();
+            if (book.Id <= 0)
+            {
+                return;
+            }
+
+            var rules = this.cbxBookConfig.Tag as List<CrawlerRule> ?? new List<CrawlerRule>();
+            var rule = rules.FirstOrDefault(x => x.RuleName.Equals(book.CrawlerRuleName));
+            if (rule == null)
+            {
+                Console.WriteLine($"{book.BookName} 没有找到匹配的爬虫规则 {book.CrawlerRuleName}");
+                return;
+            }
+
             if (e.Frame.IsMain)
             {
                 chromeBrowser.GetSourceAsync().ContinueWith(taskHtml =>
                 {
+                    Thread.Sleep(rule.AwaitTime * 1000);
+
                     var html = taskHtml.Result;
                     var doc = new HtmlDocument();
                     doc.LoadHtml(html);
-                    var chapterNode = doc.GetElementbyId("j_chapterBox");
-                    if (chapterNode == null)
+                    //*[@id="tsf"]/div[2]/div[1]/div[1]/div/div[2]/input
+                    HtmlNode chapterRootNode = null;
+                    if (rule.ChapterRootPath.Contains("/"))
                     {
-                        return; // 完结
+                        chapterRootNode = doc.DocumentNode.SelectSingleNode(rule.ChapterRootPath);
+                    }
+                    else
+                    {
+                        chapterRootNode = doc.GetElementbyId(rule.ChapterRootPath);
                     }
 
-                    var chapterTitleText = chapterNode.Descendants().Where(x => x.HasClass("j_chapterName")).FirstOrDefault()?.InnerText ?? string.Empty;
-                    var chapterHtml = chapterNode?.OuterHtml ?? string.Empty;
-                    var chapterText = chapterNode?.InnerText ?? string.Empty;
+                    if (chapterRootNode == null)
+                    {
+                        Console.WriteLine("请确认打开了第一章的url");
+                        chromeBrowser.FrameLoadEnd -= ChromeBrowser_FrameLoadEnd;
+                        return; // 爬取到了最后一章,完结
+                    }
+
+                    var chapterTitleText = string.Empty;
+                    if (rule.ChapterTitleType.ToLower().Equals("xpath"))
+                    {
+                        chapterTitleText = doc.DocumentNode.SelectSingleNode(rule.ChapterTitlePath)?.InnerText ?? string.Empty;
+                    }
+                    else if (rule.ChapterTitleType.ToLower().Equals("id"))
+                    {
+                        chapterTitleText = doc.GetElementbyId(rule.ChapterTitlePath)?.InnerText ?? string.Empty;
+                    }
+                    else if (rule.ChapterTitleType.ToLower().Equals("class"))
+                    {
+                        chapterTitleText = chapterRootNode.Descendants().Where(x => x.HasClass(rule.ChapterTitlePath)).FirstOrDefault()?.InnerText ?? string.Empty;
+                    }
+
+                    if (string.IsNullOrWhiteSpace(chapterTitleText))
+                    {
+                        Console.WriteLine($"爬虫获取章节标题的规则匹配失败, 请检查 {rule.ChapterTitleType} {rule.ChapterTitlePath}");
+                        chromeBrowser.FrameLoadEnd -= ChromeBrowser_FrameLoadEnd;
+                        return; // 爬取到了最后一章,完结
+                    }
+
+                    var chapterHtml = chapterRootNode.OuterHtml ?? string.Empty;
+                    var chapterText = chapterRootNode.InnerText ?? string.Empty;
 
                     // 写入sqlite数据库中
-                    var book = this.panel1.Tag as Book ?? new Book();
-                    if (book.Id <= 0)
+                    ChaptersUtils.AddChapters(new List<Chapter>
                     {
-                        return;
-                    }
-                    ChaptersUtils.AddChapters(new List<Chapter> { new Chapter() { ChapterTitle = chapterTitleText, BookId = book.Id, Text = chapterText, Html = chapterHtml } });
+                        new Chapter() { ChapterTitle = chapterTitleText, BookId = book.Id, Text = chapterText, Html = chapterHtml } },
+                        book.Id
+                    );
 
                     // 翻页, j_chapterNext
                     chromeBrowser.GetMainFrame().ExecuteJavaScriptAsync("document.getElementById('j_chapterNext').click();");
@@ -135,19 +187,56 @@ namespace SharpProxy.Browser.Example
 
         private void btnExport_Click(object sender, EventArgs e)
         {
-            BooksUtils.ExportBooks(new List<Book> { new Book { BookName = "道君", Author = "跃千愁" } });
+            // 浏览器刚打开, 还没有开始抓取网页
+            var id = this.cbxBookConfig.SelectedValue as int? ?? 0;
+            if (id <= 0)
+            {
+                Console.WriteLine("请选择导出的书名");
+                return;
+            }
+
+            if(cbxBookConfig.DataSource is List<Book> books)
+            {
+                var book = books.FirstOrDefault(x => x.Id == id);
+                Console.WriteLine("正在导出,请稍后");
+                Task.Factory.StartNew(() =>
+                {
+                    BooksUtils.ExportBooks(new List<Book> { book });
+                    var exportDir = Environment.CurrentDirectory + "\\ExportBooks";
+                    Console.WriteLine($"导出完成,{exportDir}");
+                    System.Diagnostics.Process.Start("explorer.exe", exportDir);
+                });
+            }
         }
 
         private void btnLoad_Click(object sender, EventArgs e)
         {
             if (string.IsNullOrWhiteSpace(txtUrl.Text))
             {
-                chromeBrowser.Reload();
+                Console.WriteLine("请输入url到地址栏");
             }
             else
             {
                 chromeBrowser.Load(txtUrl.Text);
             }
+        }
+
+        private void btnEditRule_Click(object sender, EventArgs e)
+        {
+            var crawlerRuleForm = new CrawlerRuleForm();
+            crawlerRuleForm.ShowDialog();
+
+            var bookConfigs = BooksUtils.GetAllBookConfig();
+            bookConfigs.ForEach(x =>
+            {
+                x.BookName = $"{x.BookName}-{x.Author}";
+            });
+            cbxBookConfig.DataSource = bookConfigs;
+            cbxBookConfig.DisplayMember = nameof(Book.BookName);
+            cbxBookConfig.ValueMember = nameof(Book.Id);
+            cbxBookConfig.SelectedIndex = 0;
+
+            this.cbxBookConfig.Tag = CrawlerRuleUtils.GetAllCrawlerRules();
         }
     }
 }

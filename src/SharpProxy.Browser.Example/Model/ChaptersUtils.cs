@@ -8,12 +8,12 @@ namespace SharpProxy.Browser.Example.Model
 {
     public class ChaptersUtils
     {
-        public static List<Chapter> AddChapters(List<Chapter> chapters)
+        public static List<Chapter> AddChapters(List<Chapter> chapters, int bookId)
         {
             var titles = chapters.Select(x => x.ChapterTitle).ToList();
             using (var db = new SqliteDbContext())
             {
-                var oldChapters = db.Chapters.Where(x => titles.Contains(x.ChapterTitle)).ToList();
+                var oldChapters = db.Chapters.Where(x => x.BookId == bookId && titles.Contains(x.ChapterTitle)).ToList();
                 var id = db.Chapters.OrderByDescending(x => x.Id).FirstOrDefault()?.Id ?? 0;
                 foreach (var item in chapters)
                 {

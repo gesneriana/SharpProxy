@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -9,47 +10,56 @@ namespace SharpProxy.Browser.Example.Model
 {
     public class BooksUtils
     {
-        public static List<Book> AddBooks(List<Book> books)
+        public static Book AddBook(Book book)
         {
-            var names = books.Select(x => x.BookName).ToList();
             using (var db = new SqliteDbContext())
             {
                 db.Database.EnsureCreated();
-                var oldBooks = db.Books.Where(x => names.Contains(x.BookName)).ToList();
-                var id = db.Books.OrderByDescending(x => x.Id).FirstOrDefault()?.Id ?? 0;
-                foreach (var item in books)
+                var oldBook = db.Books.Where(x => x.BookName.Equals(book.BookName) && x.Author.Equals(book.Author)).FirstOrDefault();
+
+                if (oldBook != null)
                 {
-                    var oldBook = oldBooks.FirstOrDefault(x => x.BookName.Equals(item.BookName)) ?? new Book();
-                    if (item.BookName.Equals(oldBook.BookName) && item.Author.Equals(oldBook.Author))
-                    {
-                        item.Id = oldBook.Id;
-                        continue;   // 同名书籍,跳过
-                    }
-                    item.Id = ++id;
-                    db.Books.Add(item);
+                    oldBook.CrawlerRuleName = book.CrawlerRuleName;
+                    oldBook.StartUrl = book.StartUrl;
                 }
+                else
+                {
+                    var id = db.Books.OrderByDescending(x => x.Id).FirstOrDefault()?.Id ?? 0;
+                    book.Id = ++id;
+                    db.Books.Add(book);
+                    oldBook = book;
+                }
+
                 db.SaveChanges();
+                return oldBook;
             }
-            return books;
         }
 
         public static void ExportBooks(List<Book> books)
         {
-            var names = books.Select(x => x.BookName).ToList();
+            var ids = books.Select(x => x.Id).ToList();
             using (var db = new SqliteDbContext())
             {
                 db.Database.EnsureCreated();
-                var oldBooks = db.Books.Where(x => names.Contains(x.BookName)).ToList();
+                var oldBooks = db.Books.Where(x => ids.Contains(x.Id)).ToList();
 
                 var sbTxt = new StringBuilder();
                 var sbHtml = new StringBuilder();
                 foreach (var item in oldBooks)
                 {
-                    var chaps = db.Chapters.Where(x => x.BookId == item.Id).ToList();
+                    var chaps = db.Chapters.Where(x => x.BookId == item.Id).ToList() ?? new List<Chapter>();
+                    if (chaps.Count == 0)
+                    {
+                        Console.WriteLine($"{item.BookName}-{item.Author} 没有获取到章节列表, 请先执行爬取任务");
+                    }
 
-                    var bookTxtPath = $"{item.BookName}-{item.Author}.txt";
-                    var bookHtmlPath = $"{item.BookName}-{item.Author}.html";
+                    var bookTxtPath = $"./ExportBooks/{item.BookName}-{item.Author}.txt";
+                    var bookHtmlPath = $"./ExportBooks/{item.BookName}-{item.Author}.html";
 
+                    if (!Directory.Exists("ExportBooks"))
+                    {
+                        Directory.CreateDirectory("ExportBooks");
+                    }
                     var txtFile = File.Create(bookTxtPath);
                     txtFile.Close();
                     var htmlFile = File.Create(bookHtmlPath);
@@ -82,6 +92,15 @@ namespace SharpProxy.Browser.Example.Model
                     txtFileStream.Close();
                     htmlFileStream.Close();
                 }
+            }
+        }
+
+        public static List<Book> GetAllBookConfig()
+        {
+            using (var db = new SqliteDbContext())
+            {
+                db.Database.EnsureCreated();
+                return db.Books.ToList() ?? new List<Book>();
             }
         }
 
