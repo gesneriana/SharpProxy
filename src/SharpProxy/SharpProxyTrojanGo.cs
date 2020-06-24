@@ -5,6 +5,7 @@ using System;
 using System.Runtime.InteropServices;
 using System.Text;
 using Newtonsoft.Json;
+using System.IO;
 
 namespace SharpProxy
 {
@@ -18,8 +19,38 @@ namespace SharpProxy
         /// config.json将会决定trojan go的工作模式, 比如以客户端, 或者服务器端启动
         /// </summary>
         /// <param name="dir">config.json配置文件的目录</param>
-        public static void Start(string dir)
+        /// <param name="isClient">启动模式, 这个参数决定程序会读取哪个配置文件</param>
+        public static void Start(string dir, bool isClient = true)
         {
+            if (isClient)
+            {
+                var clientConfigFile = dir + "/client.json";
+                if (!File.Exists(clientConfigFile))
+                {
+                    Console.WriteLine($"{clientConfigFile} 不存在");
+                }
+                else
+                {
+                    var clientConfigJson = File.ReadAllText(clientConfigFile);
+                    var runConfigFile = dir + "/config.json";
+                    File.WriteAllText(runConfigFile, clientConfigJson);
+                }
+            }
+            else
+            {
+                var serverConfigFile = dir + "/server.json";
+                if (!File.Exists(serverConfigFile))
+                {
+                    Console.WriteLine($"{serverConfigFile} 不存在");
+                }
+                else
+                {
+                    var serverConfigJson = File.ReadAllText(serverConfigFile);
+                    var runConfigFile = dir + "/config.json";
+                    File.WriteAllText(runConfigFile, serverConfigJson);
+                }
+            }
+
             // 中文目录会导致乱码,因为封送字符串是用ANSI编码, 所以需要先base64编码, 
             // *C.char 类型对UTF-8和Unicode支持不太好, GoString更是会导致程序崩溃(我已经在ubuntu和windows中测试过)
             var b64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(dir));

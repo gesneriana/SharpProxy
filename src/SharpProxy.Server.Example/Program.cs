@@ -13,21 +13,8 @@ namespace SharpProxy.Server.Example
             // 即使以GUI程序启动, 调试模式也会在visual studio中输出控制台日志
             Console.WriteLine(SharpProxyTrojanGo.GetPlatformInfo());
 
-            var serverConfigFile = Environment.CurrentDirectory + "/libs/server.json";
-            if (!File.Exists(serverConfigFile))
-            {
-                Console.WriteLine($"{serverConfigFile} 不存在");
-                return;
-            }
-            else
-            {
-                var serverConfigJson = File.ReadAllText(serverConfigFile);
-                var runConfigFile = Environment.CurrentDirectory + "/libs/config.json";
-                File.WriteAllText(runConfigFile, serverConfigJson);
-            }
-
             var dir = Environment.CurrentDirectory + "/libs";
-            SharpProxyTrojanGo.Start(dir);
+            SharpProxyTrojanGo.Start(dir, false);
 
             Thread.Sleep(1000);
             Console.WriteLine("输入Q终止程序");

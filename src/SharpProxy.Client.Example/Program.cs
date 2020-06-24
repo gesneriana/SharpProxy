@@ -13,18 +13,6 @@ namespace SharpProxy.Client.Example
             // 即使以GUI程序启动, 调试模式也会在visual studio中输出控制台日志
             Console.WriteLine(SharpProxyTrojanGo.GetPlatformInfo());
 
-            var clientConfigFile = Environment.CurrentDirectory + "/libs/client.json";
-            if (!File.Exists(clientConfigFile))
-            {
-                Console.WriteLine($"{clientConfigFile} 不存在");
-            }
-            else
-            {
-                var clientConfigJson = File.ReadAllText(clientConfigFile);
-                var runConfigFile = Environment.CurrentDirectory + "/libs/config.json";
-                File.WriteAllText(runConfigFile, clientConfigJson);
-            }
-
             var dir = Environment.CurrentDirectory + "/libs";
             SharpProxyTrojanGo.Start(dir);
 
