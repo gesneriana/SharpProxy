@@ -180,7 +180,7 @@ namespace SharpProxy.Browser.Example
                     );
 
                     // 翻页, j_chapterNext
-                    chromeBrowser.GetMainFrame().ExecuteJavaScriptAsync("document.getElementById('j_chapterNext').click();");
+                    chromeBrowser.GetMainFrame().ExecuteJavaScriptAsync($"{rule.NextPagePath}.click();");
                 });
             }
         }
