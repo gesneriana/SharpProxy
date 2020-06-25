@@ -10,6 +10,7 @@ import (
 	"runtime"
 	"sync/atomic"
 
+	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/option"
 	"github.com/p4gefau1t/trojan-go/proxy"
@@ -45,6 +46,7 @@ func Start(b64 *C.char) {
 		}
 
 		var configDir = string(decodeBytes)
+		common.ProgramDir = configDir
 		var configFile = configDir + "/config.json"
 		// jni 调用golib只会执行一次初始化, 所以再次启动需要手动初始化
 		if option.HandlersCount() == 0 {
