@@ -4,17 +4,17 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
+	"net"
+	"testing"
+
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/config"
-	_ "github.com/p4gefau1t/trojan-go/log/golog"
 	"github.com/p4gefau1t/trojan-go/redirector"
 	"github.com/p4gefau1t/trojan-go/statistic"
 	"github.com/p4gefau1t/trojan-go/test/util"
 	"github.com/p4gefau1t/trojan-go/tunnel"
 	"github.com/p4gefau1t/trojan-go/tunnel/transport"
-	"io"
-	"net"
-	"testing"
 )
 
 type MockUser struct {
@@ -75,9 +75,11 @@ func TestTrojan(t *testing.T) {
 		redir:      redirector.NewRedirector(ctx),
 	}
 	go s.acceptLoop()
+	ctx, cancel = context.WithCancel(ctx)
 	c := &Client{
 		underlay: tcpClient,
 		ctx:      ctx,
+		cancel:   cancel,
 		user:     &MockUser{},
 	}
 

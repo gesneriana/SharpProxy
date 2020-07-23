@@ -3,15 +3,16 @@ package util
 import (
 	"crypto/rand"
 	"fmt"
-	"github.com/p4gefau1t/trojan-go/common"
-	"github.com/p4gefau1t/trojan-go/log"
-	"golang.org/x/net/websocket"
 	"io"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/p4gefau1t/trojan-go/common"
+	"github.com/p4gefau1t/trojan-go/log"
+	"golang.org/x/net/websocket"
 )
 
 var HTTPAddr string
@@ -44,7 +45,7 @@ func runHelloHTTPServer() {
 		Handler: mux,
 	}
 	go server.ListenAndServe()
-	time.Sleep(time.Second * 3) // wait for http server
+	time.Sleep(time.Second * 1) // wait for http server
 	fmt.Println("http test server listening on", HTTPAddr)
 	wg.Done()
 }
@@ -57,16 +58,19 @@ func runTCPEchoServer() {
 	common.Must(err)
 	wg.Done()
 	go func() {
+		defer listener.Close()
 		for {
 			conn, err := listener.Accept()
 			if err != nil {
 				return
 			}
 			go func(conn net.Conn) {
+				defer conn.Close()
 				for {
-					conn.SetDeadline(time.Now().Add(time.Second))
 					buf := make([]byte, 2048)
+					conn.SetDeadline(time.Now().Add(time.Second * 5))
 					n, err := conn.Read(buf)
+					conn.SetDeadline(time.Time{})
 					if err != nil {
 						return
 					}
@@ -111,6 +115,7 @@ func runTCPBlackHoleServer() {
 	common.Must(err)
 	wg.Done()
 	go func() {
+		defer listener.Close()
 		for {
 			conn, err := listener.Accept()
 			if err != nil {
@@ -129,6 +134,7 @@ func runUDPBlackHoleServer() {
 	common.Must(err)
 	wg.Done()
 	go func() {
+		defer conn.Close()
 		buf := make([]byte, 1024*8)
 		for {
 			_, _, err := conn.ReadFrom(buf[:])

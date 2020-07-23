@@ -3,13 +3,16 @@ package scenario
 import (
 	"bytes"
 	"fmt"
-	"github.com/p4gefau1t/trojan-go/test/util"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/p4gefau1t/trojan-go/test/util"
+
+	_ "net/http/pprof"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	_ "github.com/p4gefau1t/trojan-go/log/golog"
@@ -20,7 +23,6 @@ import (
 	_ "github.com/p4gefau1t/trojan-go/proxy/server"
 	_ "github.com/p4gefau1t/trojan-go/statistic/memory"
 	netproxy "golang.org/x/net/proxy"
-	_ "net/http/pprof"
 )
 
 // test key and cert
@@ -85,11 +87,11 @@ func init() {
 }
 
 func CheckClientServer(clientData, serverData string, socksPort int) (ok bool) {
-	server, err := proxy.NewProxyFromConfigData([]byte(clientData), false)
+	server, err := proxy.NewProxyFromConfigData([]byte(serverData), false)
 	common.Must(err)
 	go server.Run()
 
-	client, err := proxy.NewProxyFromConfigData([]byte(serverData), false)
+	client, err := proxy.NewProxyFromConfigData([]byte(clientData), false)
 	common.Must(err)
 	go client.Run()
 
@@ -143,7 +145,7 @@ ssl:
 websocket:
     enabled: true
     path: /ws
-    hostname: 127.0.0.1
+    host: somedomainname.com
 shadowsocks:
     enabled: true
     method: AEAD_CHACHA20_POLY1305
@@ -172,7 +174,7 @@ shadowsocks:
 websocket:
     enabled: true
     path: /ws
-    hostname: 127.0.0.1
+    host: 127.0.0.1
 `, serverPort, util.HTTPPort)
 
 	if !CheckClientServer(clientData, serverData, socksPort) {

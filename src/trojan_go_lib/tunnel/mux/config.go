@@ -3,13 +3,13 @@ package mux
 import "github.com/p4gefau1t/trojan-go/config"
 
 type MuxConfig struct {
-	Enabled     bool `json,yaml:"enabled"`
-	Timeout     int  `json,yaml:"timeout"`
-	Concurrency int  `json,yaml:"concurrency"`
+	Enabled     bool `json:"enabled" yaml:"enabled"`
+	IdleTimeout int  `json:"idle_timeout" yaml:"idle-timeout"`
+	Concurrency int  `json:"concurrency" yaml:"concurrency"`
 }
 
 type Config struct {
-	Mux MuxConfig `json,yaml:"mux"`
+	Mux MuxConfig `json:"mux" yaml:"mux"`
 }
 
 func init() {
@@ -17,7 +17,7 @@ func init() {
 		return &Config{
 			Mux: MuxConfig{
 				Enabled:     false,
-				Timeout:     30,
+				IdleTimeout: 30,
 				Concurrency: 8,
 			},
 		}

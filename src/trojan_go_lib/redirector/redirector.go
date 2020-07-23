@@ -4,12 +4,11 @@ import (
 	"context"
 	"io"
 	"net"
+	"reflect"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/log"
 )
-
-const Name = "REDIRECTOR"
 
 type Dial func(net.Addr) (net.Conn, error)
 
@@ -29,8 +28,12 @@ type Redirector struct {
 }
 
 func (r *Redirector) Redirect(redirection *Redirection) {
-	r.redirectionChan <- redirection
-	log.Debug("redirect request")
+	select {
+	case r.redirectionChan <- redirection:
+		log.Debug("redirect request")
+	case <-r.ctx.Done():
+		log.Debug("exiting")
+	}
 }
 
 func (r *Redirector) worker() {
@@ -38,7 +41,15 @@ func (r *Redirector) worker() {
 		select {
 		case redirection := <-r.redirectionChan:
 			handle := func(redirection *Redirection) {
+				if redirection.InboundConn == nil || reflect.ValueOf(redirection.InboundConn).IsNil() {
+					log.Error("nil inbound conn")
+					return
+				}
 				defer redirection.InboundConn.Close()
+				if redirection.RedirectTo == nil || reflect.ValueOf(redirection.RedirectTo).IsNil() {
+					log.Error("nil redirection addr")
+					return
+				}
 				if redirection.Dial == nil {
 					redirection.Dial = defaultDial
 				}

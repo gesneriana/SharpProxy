@@ -3,10 +3,11 @@ package trojan
 import (
 	"bytes"
 	"encoding/binary"
-	"github.com/p4gefau1t/trojan-go/log"
 	"io"
 	"io/ioutil"
 	"net"
+
+	"github.com/p4gefau1t/trojan-go/log"
 
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/tunnel"
@@ -47,7 +48,7 @@ func (c *PacketConn) WriteWithMetadata(payload []byte, metadata *tunnel.Metadata
 
 	_, err := c.Conn.Write(w.Bytes())
 
-	log.Debug("udp packet back to", c.RemoteAddr(), "metadata", metadata, "size", length)
+	log.Debug("udp packet remote", c.RemoteAddr(), "metadata", metadata, "size", length)
 	return len(payload), err
 }
 

@@ -5,6 +5,10 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
+	"io"
+	"io/ioutil"
+	"strings"
+
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/config"
 	"github.com/p4gefau1t/trojan-go/log"
@@ -13,9 +17,6 @@ import (
 	"github.com/p4gefau1t/trojan-go/tunnel/transport"
 	"github.com/p4gefau1t/trojan-go/tunnel/websocket"
 	utls "github.com/refraction-networking/utls"
-	"io"
-	"io/ioutil"
-	"strings"
 )
 
 // Client is a tls client
@@ -145,16 +146,9 @@ func NewClient(ctx context.Context, underlay tunnel.Client) (*Client, error) {
 			}
 			log.Trace("issuer:", cert.Issuer, "subject:", cert.Subject)
 		}
-	} else if len(cfg.TLS.CertBytes) != 0 {
-		client.ca = x509.NewCertPool()
-		ok := client.ca.AppendCertsFromPEM(cfg.TLS.CertBytes)
-		if !ok {
-			log.Warn("invalid cert list")
-		}
-		log.Info("using custom cert (data)")
 	}
 
-	if cfg.TLS.CertPath == "" && len(cfg.TLS.CertBytes) == 0 {
+	if cfg.TLS.CertPath == "" {
 		log.Info("cert is unspecified, using default ca list")
 	}
 

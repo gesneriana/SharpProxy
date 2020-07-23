@@ -2,8 +2,9 @@ package dokodemo
 
 import (
 	"context"
-	"github.com/p4gefau1t/trojan-go/common"
 	"net"
+
+	"github.com/p4gefau1t/trojan-go/common"
 
 	"github.com/p4gefau1t/trojan-go/tunnel"
 )
@@ -21,19 +22,18 @@ func (c *Conn) Metadata() *tunnel.Metadata {
 }
 
 // PacketConn receive packet info from the packet dispatcher
-// TODO implement net.PacketConn
 type PacketConn struct {
 	net.PacketConn
-	M      *tunnel.Metadata
-	Input  chan []byte
-	Output chan []byte
-	Source net.Addr
-	Ctx    context.Context
-	Cancel context.CancelFunc
+	metadata *tunnel.Metadata
+	input    chan []byte
+	output   chan []byte
+	src      net.Addr
+	ctx      context.Context
+	cancel   context.CancelFunc
 }
 
 func (c *PacketConn) Close() error {
-	c.Cancel()
+	c.cancel()
 	// don't close the underlying udp socket
 	return nil
 }
@@ -54,19 +54,19 @@ func (c *PacketConn) WriteTo(p []byte, addr net.Addr) (int, error) {
 
 func (c *PacketConn) ReadWithMetadata(p []byte) (int, *tunnel.Metadata, error) {
 	select {
-	case payload := <-c.Input:
+	case payload := <-c.input:
 		n := copy(p, payload)
-		return n, c.M, nil
-	case <-c.Ctx.Done():
+		return n, c.metadata, nil
+	case <-c.ctx.Done():
 		return 0, nil, common.NewError("dokodemo packet conn closed")
 	}
 }
 
 func (c *PacketConn) WriteWithMetadata(p []byte, m *tunnel.Metadata) (int, error) {
 	select {
-	case c.Output <- p:
+	case c.output <- p:
 		return len(p), nil
-	case <-c.Ctx.Done():
+	case <-c.ctx.Done():
 		return 0, common.NewError("dokodemo packet conn failed to write")
 	}
 }

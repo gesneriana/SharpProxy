@@ -1,23 +1,23 @@
 {
-    "run_type": "server",
-    "local_addr": "0.0.0.0",
-    "local_port": 443,
-    "remote_addr": "127.0.0.1",
-    "remote_port": 3000,
-    "password": [
-        "gesneriana"
-    ],
-    "websocket": {
-        "enabled": true,
-        "path": "/web",
-        "hostname": "ca.kizuna.top"
-    },
-    "mux": {
-        "enabled": true
-    },
+  "run_type": "server",
+  "local_addr": "0.0.0.0",
+  "local_port": 2443,
+  "remote_addr": "127.0.0.1",
+  "remote_port": 3000,
+  "password": [
+    "gesneriana"
+  ],
+  "websocket": {
+    "enabled": true,
+    "path": "/web",
+    "hostname": "jp.kizuna.top"
+  },
+  "mux": {
+    "enabled": true
+  },
   "ssl": {
-    "cert": "server.crt",
-    "key": "server.key",
-    "sni": "ca.kizuna.top"
+    "cert": "/root/.local/share/caddy/certificates/acme-v02.api.letsencrypt.org-directory/jp.kizuna.top/jp.kizuna.top.crt",
+    "key": "/root/.local/share/caddy/certificates/acme-v02.api.letsencrypt.org-directory/jp.kizuna.top/jp.kizuna.top.key",
+    "sni": "jp.kizuna.top"
   }
 }

@@ -2,14 +2,17 @@ package tls
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
-	"github.com/p4gefau1t/trojan-go/tunnel/tls/fingerprint"
-	"github.com/p4gefau1t/trojan-go/tunnel/transport"
 	"io"
 	"io/ioutil"
+	"time"
+
+	"github.com/p4gefau1t/trojan-go/tunnel/tls/fingerprint"
+	"github.com/p4gefau1t/trojan-go/tunnel/transport"
 
 	"net"
 	"net/http"
@@ -44,6 +47,7 @@ type Server struct {
 	cancel             context.CancelFunc
 	underlay           tunnel.Server
 	nextHTTP           bool
+	portOverrider      map[string]int
 }
 
 func (s *Server) Close() error {
@@ -52,6 +56,15 @@ func (s *Server) Close() error {
 		s.keyLogger.Close()
 	}
 	return s.underlay.Close()
+}
+
+func isDomainNameMatched(pattern string, domainName string) bool {
+	if strings.HasPrefix(pattern, "*.") {
+		suffix := pattern[2:]
+		domainPrefixLen := len(domainName) - len(suffix) - 1
+		return strings.HasSuffix(domainName, suffix) && domainPrefixLen > 0 && !strings.Contains(domainName[:domainPrefixLen], ".")
+	}
+	return pattern == domainName
 }
 
 func (s *Server) acceptLoop() {
@@ -66,17 +79,19 @@ func (s *Server) acceptLoop() {
 			return
 		}
 		go func(conn net.Conn) {
-			sniVerified := true
+
 			tlsConfig := &tls.Config{
-				Certificates:             s.keyPair,
 				CipherSuites:             s.cipherSuite,
 				PreferServerCipherSuites: s.PreferServerCipher,
 				SessionTicketsDisabled:   !s.sessionTicket,
 				NextProtos:               s.alpn,
 				KeyLogWriter:             s.keyLogger,
 				GetCertificate: func(hello *tls.ClientHelloInfo) (*tls.Certificate, error) {
-					if s.verifySNI && hello.ServerName != s.sni {
-						sniVerified = false
+					sni := s.keyPair[0].Leaf.Subject.CommonName
+					if s.sni != "" {
+						sni = s.sni
+					}
+					if s.verifySNI && !isDomainNameMatched(sni, hello.ServerName) {
 						return nil, common.NewError("sni mismatched: " + hello.ServerName + ", expected: " + s.sni)
 					}
 					return &s.keyPair[0], nil
@@ -93,11 +108,7 @@ func (s *Server) acceptLoop() {
 			handshakeRewindConn.StopBuffering()
 
 			if err != nil {
-				if !sniVerified {
-					// close tls conn immediately if the sni is invalid
-					tlsConn.Close()
-					log.Error(common.NewError("tls client hello with wrong sni from" + conn.RemoteAddr().String()).Base(err))
-				} else if strings.Contains(err.Error(), "first record does not look like a TLS handshake") {
+				if strings.Contains(err.Error(), "first record does not look like a TLS handshake") {
 					// not a valid tls client hello
 					handshakeRewindConn.Rewind()
 					log.Error(common.NewError("failed to perform tls handshake with " + tlsConn.RemoteAddr().String() + ", redirecting").Base(err))
@@ -139,6 +150,7 @@ func (s *Server) acceptLoop() {
 			} else {
 				if !s.nextHTTP {
 					// there is no websocket layer waiting for connections, redirect it
+					log.Error("incoming http request, but no websocket server is listening")
 					s.redir.Redirect(&redirector.Redirection{
 						InboundConn: rewindConn,
 						RedirectTo:  s.fallbackAddress,
@@ -180,10 +192,88 @@ func (s *Server) AcceptPacket(tunnel.Tunnel) (tunnel.PacketConn, error) {
 	panic("not supported")
 }
 
-// NewServer creates a transport layer server
+func (s *Server) checkKeyPairLoop(checkRate time.Duration, keyPath string, certPath string, password string) {
+	var lastKeyBytes, lastCertBytes []byte
+	for {
+		log.Debug("checking cert..")
+		keyBytes, err := ioutil.ReadFile(keyPath)
+		if err != nil {
+			log.Error(common.NewError("tls failed to check key").Base(err))
+			continue
+		}
+		certBytes, err := ioutil.ReadFile(certPath)
+		if err != nil {
+			log.Error(common.NewError("tls failed to check cert").Base(err))
+			continue
+		}
+		if !bytes.Equal(keyBytes, lastKeyBytes) || !bytes.Equal(lastCertBytes, certBytes) {
+			log.Info("new key pair detected")
+			keyPair, err := loadKeyPair(keyPath, certPath, password)
+			if err != nil {
+				log.Error(common.NewError("tls failed to load new key pair").Base(err))
+				continue
+			}
+			// TODO fix race
+			s.keyPair = []tls.Certificate{*keyPair}
+			lastKeyBytes = keyBytes
+			lastCertBytes = certBytes
+		}
+		select {
+		case <-time.After(checkRate):
+			continue
+		case <-s.ctx.Done():
+			log.Debug("exiting")
+			return
+		}
+	}
+}
+
+func loadKeyPair(keyPath string, certPath string, password string) (*tls.Certificate, error) {
+	if password != "" {
+		keyFile, err := ioutil.ReadFile(keyPath)
+		if err != nil {
+			return nil, common.NewError("failed to load key file").Base(err)
+		}
+		keyBlock, _ := pem.Decode(keyFile)
+		if keyBlock == nil {
+			return nil, common.NewError("failed to decode key file").Base(err)
+		}
+		decryptedKey, err := x509.DecryptPEMBlock(keyBlock, []byte(password))
+		if err == nil {
+			return nil, common.NewError("failed to decrypt key").Base(err)
+		}
+
+		certFile, err := ioutil.ReadFile(certPath)
+		certBlock, _ := pem.Decode(certFile)
+		if certBlock == nil {
+			return nil, common.NewError("failed to decode cert file").Base(err)
+		}
+
+		keyPair, err := tls.X509KeyPair(certBlock.Bytes, decryptedKey)
+		if err != nil {
+			return nil, err
+		}
+		keyPair.Leaf, err = x509.ParseCertificate(keyPair.Certificate[0])
+		if err != nil {
+			return nil, common.NewError("failed to parse leaf certificate").Base(err)
+		}
+
+		return &keyPair, nil
+	}
+	keyPair, err := tls.LoadX509KeyPair(certPath, keyPath)
+	if err != nil {
+		return nil, common.NewError("failed to load key pair").Base(err)
+	}
+	keyPair.Leaf, err = x509.ParseCertificate(keyPair.Certificate[0])
+	if err != nil {
+		return nil, common.NewError("failed to parse leaf certificate").Base(err)
+	}
+	return &keyPair, nil
+}
+
+// NewServer creates a tls layer server
 func NewServer(ctx context.Context, underlay tunnel.Server) (*Server, error) {
 	cfg := config.FromContext(ctx, Name).(*Config)
-	ctx, cancel := context.WithCancel(ctx)
 
 	var fallbackAddress *tunnel.Address
 	if cfg.TLS.FallbackPort != 0 {
@@ -201,10 +291,27 @@ func NewServer(ctx context.Context, underlay tunnel.Server) (*Server, error) {
 		log.Warn("empty tls fallback port")
 	}
 
-	if cfg.TLS.SNI == "" && cfg.TLS.VerifyHostName {
-		return nil, common.NewError("cannot verify hostname without sni")
+	keyPair, err := loadKeyPair(cfg.TLS.KeyPath, cfg.TLS.CertPath, cfg.TLS.KeyPassword)
+	if err != nil {
+		return nil, common.NewError("tls failed to load key pair")
 	}
 
+	var keyLogger io.WriteCloser
+	if cfg.TLS.KeyLogPath != "" {
+		log.Warn("tls key logging activated. USE OF KEY LOGGING COMPROMISES SECURITY. IT SHOULD ONLY BE USED FOR DEBUGGING.")
+		file, err := os.OpenFile(cfg.TLS.KeyLogPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
+		if err != nil {
+			return nil, common.NewError("failed to open key log file").Base(err)
+		}
+		keyLogger = file
+	}
+
+	var cipherSuite []uint16
+	if len(cfg.TLS.Cipher) != 0 {
+		cipherSuite = fingerprint.ParseCipher(strings.Split(cfg.TLS.Cipher, ":"))
+	}
+
+	ctx, cancel := context.WithCancel(ctx)
 	server := &Server{
 		underlay:           underlay,
 		fallbackAddress:    fallbackAddress,
@@ -216,74 +323,22 @@ func NewServer(ctx context.Context, underlay tunnel.Server) (*Server, error) {
 		connChan:           make(chan tunnel.Conn, 32),
 		wsChan:             make(chan tunnel.Conn, 32),
 		redir:              redirector.NewRedirector(ctx),
+		keyPair:            []tls.Certificate{*keyPair},
+		keyLogger:          keyLogger,
+		cipherSuite:        cipherSuite,
 		ctx:                ctx,
 		cancel:             cancel,
 	}
 
-	if cfg.TLS.KeyLogPath != "" {
-		log.Warn("tls key logging activated. USE OF KEY LOGGING COMPROMISES SECURITY. IT SHOULD ONLY BE USED FOR DEBUGGING.")
-		file, err := os.OpenFile(cfg.TLS.KeyLogPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
-		if err != nil {
-			return nil, common.NewError("failed to open key log file").Base(err)
-		}
-		server.keyLogger = file
-	}
-
-	if cfg.TLS.KeyPassword != "" {
-		keyFile, err := ioutil.ReadFile(cfg.TLS.KeyPath)
-		if err != nil {
-			return nil, common.NewError("failed to load key file").Base(err)
-		}
-		keyBlock, _ := pem.Decode(keyFile)
-		if keyBlock == nil {
-			return nil, common.NewError("failed to decode key file").Base(err)
-		}
-		decryptedKey, err := x509.DecryptPEMBlock(keyBlock, []byte(cfg.TLS.KeyPassword))
-		if err == nil {
-			return nil, common.NewError("failed to decrypt key").Base(err)
-		}
-
-		certFile, err := ioutil.ReadFile(cfg.TLS.CertPath)
-		certBlock, _ := pem.Decode(certFile)
-		if certBlock == nil {
-			return nil, common.NewError("failed to decode cert file").Base(err)
-		}
-
-		keyPair, err := tls.X509KeyPair(certBlock.Bytes, decryptedKey)
-		if err != nil {
-			return nil, err
-		}
-
-		server.keyPair = []tls.Certificate{keyPair}
-	} else {
-		if len(cfg.TLS.CertBytes) != 0 {
-			keyPair, err := tls.X509KeyPair(cfg.TLS.CertBytes, cfg.TLS.KeyBytes)
-			if err != nil {
-				return nil, err
-			}
-			server.keyPair = []tls.Certificate{keyPair}
-		} else {
-			keyPair, err := tls.LoadX509KeyPair(cfg.TLS.CertPath, cfg.TLS.KeyPath)
-			if err != nil {
-				return nil, common.NewError("failed to load key pair").Base(err)
-			}
-			server.keyPair = []tls.Certificate{keyPair}
-		}
-	}
-
-	if cfg.TLS.KeyLogPath != "" {
-		file, err := os.OpenFile(cfg.TLS.KeyLogPath, os.O_WRONLY, 0600)
-		if err != nil {
-			return nil, common.NewError("failed to open key log file")
-		}
-		server.keyLogger = file
-	}
-
-	if len(cfg.TLS.Cipher) != 0 {
-		server.cipherSuite = fingerprint.ParseCipher(strings.Split(cfg.TLS.Cipher, ":"))
-	}
-
 	go server.acceptLoop()
+	if cfg.TLS.CertCheckRate > 0 {
+		go server.checkKeyPairLoop(
+			time.Second*time.Duration(cfg.TLS.CertCheckRate),
+			cfg.TLS.KeyPath,
+			cfg.TLS.CertPath,
+			cfg.TLS.KeyPassword,
+		)
+	}
 
 	log.Debug("tls server created")
 	return server, nil

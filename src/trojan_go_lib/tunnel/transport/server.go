@@ -3,15 +3,16 @@ package transport
 import (
 	"bufio"
 	"context"
-	"github.com/p4gefau1t/trojan-go/common"
-	"github.com/p4gefau1t/trojan-go/config"
-	"github.com/p4gefau1t/trojan-go/log"
-	"github.com/p4gefau1t/trojan-go/tunnel"
 	"net"
 	"net/http"
 	"os"
 	"os/exec"
 	"strconv"
+
+	"github.com/p4gefau1t/trojan-go/common"
+	"github.com/p4gefau1t/trojan-go/config"
+	"github.com/p4gefau1t/trojan-go/log"
+	"github.com/p4gefau1t/trojan-go/tunnel"
 )
 
 // Server is a server of transport layer
@@ -27,7 +28,7 @@ type Server struct {
 
 func (s *Server) Close() error {
 	s.cancel()
-	if s.cmd != nil {
+	if s.cmd != nil && s.cmd.Process != nil {
 		s.cmd.Process.Kill()
 	}
 	return s.tcpListener.Close()

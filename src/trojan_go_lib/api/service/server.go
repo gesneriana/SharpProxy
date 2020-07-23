@@ -2,7 +2,12 @@ package service
 
 import (
 	"context"
-	"fmt"
+	"crypto/tls"
+	"crypto/x509"
+	"io"
+	"io/ioutil"
+	"net"
+
 	"github.com/p4gefau1t/trojan-go/api"
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/config"
@@ -10,8 +15,7 @@ import (
 	"github.com/p4gefau1t/trojan-go/statistic"
 	"github.com/p4gefau1t/trojan-go/tunnel/trojan"
 	"google.golang.org/grpc"
-	"io"
-	"net"
+	"google.golang.org/grpc/credentials"
 )
 
 type ServerAPI struct {
@@ -39,7 +43,7 @@ func (s *ServerAPI) GetUsers(stream TrojanServerService_GetUsersServer) error {
 		if !valid {
 			stream.Send(&GetUsersResponse{
 				Success: false,
-				Info:    "Invalid user: " + req.User.Hash,
+				Info:    "invalid user: " + req.User.Hash,
 			})
 			continue
 		}
@@ -84,38 +88,46 @@ func (s *ServerAPI) SetUsers(stream TrojanServerService_SetUsersServer) error {
 		if err != nil {
 			return err
 		}
-		if req.User == nil {
-			return common.NewError("User is unspecified")
+		if req.Status == nil {
+			return common.NewError("status is unspecified")
 		}
-		if req.User.Hash == "" {
-			req.User.Hash = common.SHA224String(req.User.Password)
+		if req.Status.User.Hash == "" {
+			req.Status.User.Hash = common.SHA224String(req.Status.User.Password)
 		}
 		switch req.Operation {
 		case SetUsersRequest_Add:
-			err = s.auth.AddUser(req.User.Hash)
-			if req.SpeedLimit != nil {
-				valid, user := s.auth.AuthUser(req.User.Hash)
+			if err = s.auth.AddUser(req.Status.User.Hash); err != nil {
+				err = common.NewError("failed to add new user").Base(err)
+				break
+			}
+			if req.Status.SpeedLimit != nil {
+				valid, user := s.auth.AuthUser(req.Status.User.Hash)
 				if !valid {
-					return common.NewError("failed to add new user")
+					err = common.NewError("failed to auth new user").Base(err)
+					continue
 				}
-				user.SetSpeedLimit(int(req.SpeedLimit.DownloadSpeed), int(req.SpeedLimit.UploadSpeed))
+				if req.Status.SpeedLimit != nil {
+					user.SetSpeedLimit(int(req.Status.SpeedLimit.DownloadSpeed), int(req.Status.SpeedLimit.UploadSpeed))
+				}
+				if req.Status.TrafficTotal != nil {
+					user.SetTraffic(req.Status.TrafficTotal.DownloadTraffic, req.Status.TrafficTotal.UploadTraffic)
+				}
+				user.SetIPLimit(int(req.Status.IpLimit))
 			}
 		case SetUsersRequest_Delete:
-			err = s.auth.DelUser(req.User.Hash)
+			err = s.auth.DelUser(req.Status.User.Hash)
 		case SetUsersRequest_Modify:
-			valid, user := s.auth.AuthUser(req.User.Hash)
+			valid, user := s.auth.AuthUser(req.Status.User.Hash)
 			if !valid {
-				err = common.NewError("invalid user " + req.User.Hash)
+				err = common.NewError("invalid user " + req.Status.User.Hash)
 			} else {
-				if req.SpeedLimit.DownloadSpeed > 0 || req.SpeedLimit.UploadSpeed > 0 {
-					user.SetSpeedLimit(int(req.SpeedLimit.DownloadSpeed), int(req.SpeedLimit.UploadSpeed))
+				if req.Status.SpeedLimit != nil {
+					user.SetSpeedLimit(int(req.Status.SpeedLimit.DownloadSpeed), int(req.Status.SpeedLimit.UploadSpeed))
 				}
-				if req.IpLimit > 0 {
-					user.SetIPLimit(int(req.IpLimit))
+				if req.Status.TrafficTotal != nil {
+					user.SetTraffic(req.Status.TrafficTotal.DownloadTraffic, req.Status.TrafficTotal.UploadTraffic)
 				}
-				if req.TrafficTotal.DownloadTraffic > 0 || req.TrafficTotal.UploadTraffic > 0 {
-					user.SetTraffic(req.TrafficTotal.DownloadTraffic, req.TrafficTotal.UploadTraffic)
-				}
+				user.SetIPLimit(int(req.Status.IpLimit))
 			}
 		}
 		if err != nil {
@@ -141,10 +153,10 @@ func (s *ServerAPI) ListUsers(req *ListUsersRequest, stream TrojanServerService_
 		ipLimit := user.GetIPLimit()
 		ipCurrent := user.GetIP()
 		err := stream.Send(&ListUsersResponse{
-			User: &User{
-				Hash: user.Hash(),
-			},
 			Status: &UserStatus{
+				User: &User{
+					Hash: user.Hash(),
+				},
 				TrafficTotal: &Traffic{
 					DownloadTraffic: downloadTraffic,
 					UploadTraffic:   uploadTraffic,
@@ -168,20 +180,67 @@ func (s *ServerAPI) ListUsers(req *ListUsersRequest, stream TrojanServerService_
 	return nil
 }
 
+func newAPIServer(cfg *Config) (*grpc.Server, error) {
+	var server *grpc.Server
+	if cfg.API.SSL.Enabled {
+		log.Info("api tls enabled")
+		keyPair, err := tls.LoadX509KeyPair(cfg.API.SSL.CertPath, cfg.API.SSL.KeyPath)
+		if err != nil {
+			return nil, common.NewError("failed to load key pair").Base(err)
+		}
+		tlsConfig := &tls.Config{
+			Certificates: []tls.Certificate{keyPair},
+		}
+		if cfg.API.SSL.VerifyClient {
+			tlsConfig.ClientAuth = tls.RequireAndVerifyClientCert
+			tlsConfig.ClientCAs = x509.NewCertPool()
+			for _, path := range cfg.API.SSL.ClientCertPath {
+				log.Debug("loading client cert: " + path)
+				certBytes, err := ioutil.ReadFile(path)
+				if err != nil {
+					return nil, common.NewError("failed to load cert file").Base(err)
+				}
+				ok := tlsConfig.ClientCAs.AppendCertsFromPEM(certBytes)
+				if !ok {
+					return nil, common.NewError("invalid client cert")
+				}
+			}
+		}
+		creds := credentials.NewTLS(tlsConfig)
+		server = grpc.NewServer(grpc.Creds(creds))
+	} else {
+		server = grpc.NewServer()
+	}
+	return server, nil
+}
+
 func RunServerAPI(ctx context.Context, auth statistic.Authenticator) error {
 	cfg := config.FromContext(ctx, Name).(*Config)
 	if !cfg.API.Enabled {
 		return nil
 	}
-	server := grpc.NewServer()
 	service := &ServerAPI{
 		auth: auth,
 	}
-	RegisterTrojanServerServiceServer(server, service)
-	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", cfg.API.APIHost, cfg.API.APIPort))
+	server, err := newAPIServer(cfg)
 	if err != nil {
 		return err
 	}
+	defer server.Stop()
+	RegisterTrojanServerServiceServer(server, service)
+	addr, err := net.ResolveIPAddr("ip", cfg.API.APIHost)
+	if err != nil {
+		return common.NewError("api found invalid addr").Base(err)
+	}
+	listener, err := net.Listen("tcp", (&net.TCPAddr{
+		IP:   addr.IP,
+		Port: cfg.API.APIPort,
+		Zone: addr.Zone,
+	}).String())
+	if err != nil {
+		return common.NewError("server api failed to listen").Base(err)
+	}
+	defer listener.Close()
 	log.Info("server-side api service is listening on", listener.Addr().String())
 	errChan := make(chan error, 1)
 	go func() {
@@ -191,7 +250,6 @@ func RunServerAPI(ctx context.Context, auth statistic.Authenticator) error {
 	case err := <-errChan:
 		return err
 	case <-ctx.Done():
-		server.Stop()
 		return nil
 	}
 }

@@ -2,13 +2,30 @@ package custom
 
 import (
 	"context"
+	"strings"
+
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/config"
 	"github.com/p4gefau1t/trojan-go/proxy"
 	"github.com/p4gefau1t/trojan-go/tunnel"
 	"gopkg.in/yaml.v2"
-	"strings"
 )
+
+func convert(i interface{}) interface{} {
+	switch x := i.(type) {
+	case map[interface{}]interface{}:
+		m2 := map[string]interface{}{}
+		for k, v := range x {
+			m2[k.(string)] = convert(v)
+		}
+		return m2
+	case []interface{}:
+		for i, v := range x {
+			x[i] = convert(v)
+		}
+	}
+	return i
+}
 
 func buildNodes(ctx context.Context, nodeConfigList []NodeConfig) (map[string]*proxy.Node, error) {
 	nodes := make(map[string]*proxy.Node)
@@ -18,10 +35,11 @@ func buildNodes(ctx context.Context, nodeConfigList []NodeConfig) (map[string]*p
 			return nil, common.NewError("invalid protocol name:" + nodeCfg.Protocol)
 		}
 		data, err := yaml.Marshal(nodeCfg.Config)
+		common.Must(err)
+		nodeContext, err := config.WithYAMLConfig(ctx, data)
 		if err != nil {
 			return nil, common.NewError("failed to parse config data for " + nodeCfg.Tag + " with protocol" + nodeCfg.Protocol).Base(err)
 		}
-		nodeContext, err := config.WithYAMLConfig(ctx, data)
 		node := &proxy.Node{
 			Name:    nodeCfg.Protocol,
 			Next:    make(map[string]*proxy.Node),
@@ -45,26 +63,27 @@ func init() {
 		var root *proxy.Node
 		// build server tree
 		for _, path := range cfg.Inbound.Path {
-			lastNode := root
+			var lastNode *proxy.Node
 			for _, tag := range path {
 				if _, found := nodes[tag]; !found {
 					return nil, common.NewError("invalid node tag: " + tag)
 				}
 				if lastNode == nil {
-					if root != nil {
-						panic("root != nil")
+					if root == nil {
+						lastNode = nodes[tag]
+						root = lastNode
+						t, err := tunnel.GetTunnel(root.Name)
+						if err != nil {
+							return nil, common.NewError("failed to find root tunnel").Base(err)
+						}
+						s, err := t.NewServer(root.Context, nil)
+						if err != nil {
+							return nil, common.NewError("failed to init root server").Base(err)
+						}
+						root.Server = s
+					} else {
+						lastNode = root
 					}
-					lastNode = nodes[tag]
-					root = lastNode
-					t, err := tunnel.GetTunnel(root.Name)
-					if err != nil {
-						return nil, common.NewError("failed to find root tunnel").Base(err)
-					}
-					s, err := t.NewServer(root.Context, nil)
-					if err != nil {
-						return nil, common.NewError("failed to init root server").Base(err)
-					}
-					root.Server = s
 				} else {
 					lastNode = lastNode.LinkNextNode(nodes[tag])
 				}

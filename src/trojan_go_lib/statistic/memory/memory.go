@@ -2,10 +2,11 @@ package memory
 
 import (
 	"context"
-	"github.com/p4gefau1t/trojan-go/log"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/p4gefau1t/trojan-go/log"
 
 	"github.com/p4gefau1t/trojan-go/config"
 
@@ -191,7 +192,7 @@ func (a *Authenticator) AddUser(hash string) error {
 	a.Lock()
 	defer a.Unlock()
 	if _, found := a.users[hash]; found {
-		return common.NewError("Hash " + hash + " is already exist")
+		return common.NewError("hash " + hash + " is already exist")
 	}
 	ctx, cancel := context.WithCancel(a.ctx)
 	meter := &User{
@@ -220,9 +221,11 @@ func (a *Authenticator) DelUser(hash string) error {
 func (a *Authenticator) ListUsers() []statistic.User {
 	a.RLock()
 	defer a.RUnlock()
-	result := make([]statistic.User, 0, len(a.users))
+	result := make([]statistic.User, len(a.users))
+	i := 0
 	for _, u := range a.users {
-		result = append(result, u)
+		result[i] = u
+		i++
 	}
 	return result
 }

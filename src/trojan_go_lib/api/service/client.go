@@ -2,15 +2,14 @@ package service
 
 import (
 	"context"
-	"fmt"
+	"net"
+
 	"github.com/p4gefau1t/trojan-go/api"
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/config"
 	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/statistic"
 	"github.com/p4gefau1t/trojan-go/tunnel/trojan"
-	"google.golang.org/grpc"
-	"net"
 )
 
 type ClientAPI struct {
@@ -57,16 +56,29 @@ func RunClientAPI(ctx context.Context, auth statistic.Authenticator) error {
 	if !cfg.API.Enabled {
 		return nil
 	}
-	server := grpc.NewServer()
+	server, err := newAPIServer(cfg)
+	if err != nil {
+		return err
+	}
+	defer server.Stop()
 	service := &ClientAPI{
 		ctx:  ctx,
 		auth: auth,
 	}
 	RegisterTrojanClientServiceServer(server, service)
-	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", cfg.API.APIHost, cfg.API.APIPort))
+	addr, err := net.ResolveIPAddr("ip", cfg.API.APIHost)
 	if err != nil {
-		return err
+		return common.NewError("api found invalid addr").Base(err)
 	}
+	listener, err := net.Listen("tcp", (&net.TCPAddr{
+		IP:   addr.IP,
+		Port: cfg.API.APIPort,
+		Zone: addr.Zone,
+	}).String())
+	if err != nil {
+		return common.NewError("client api failed to listen").Base(err)
+	}
+	defer listener.Close()
 	log.Info("client-side api service is listening on", listener.Addr().String())
 	errChan := make(chan error, 1)
 	go func() {
@@ -76,7 +88,6 @@ func RunClientAPI(ctx context.Context, auth statistic.Authenticator) error {
 	case err := <-errChan:
 		return err
 	case <-ctx.Done():
-		server.Stop()
 		return nil
 	}
 }

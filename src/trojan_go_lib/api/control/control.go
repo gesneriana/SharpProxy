@@ -5,12 +5,13 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
+
 	"github.com/p4gefau1t/trojan-go/api/service"
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/option"
 	"google.golang.org/grpc"
-	"io"
 )
 
 type apiController struct {
@@ -91,14 +92,16 @@ func (o *apiController) setUsers(apiClient service.TrojanServerServiceClient) er
 	defer stream.CloseSend()
 
 	req := &service.SetUsersRequest{
-		User: &service.User{
-			Password: *o.password,
-			Hash:     *o.hash,
-		},
-		IpLimit: int32(*o.ipLimit),
-		SpeedLimit: &service.Speed{
-			UploadSpeed:   uint64(*o.uploadSpeedLimit),
-			DownloadSpeed: uint64(*o.downloadSpeedLimit),
+		Status: &service.UserStatus{
+			User: &service.User{
+				Password: *o.password,
+				Hash:     *o.hash,
+			},
+			IpLimit: int32(*o.ipLimit),
+			SpeedLimit: &service.Speed{
+				UploadSpeed:   uint64(*o.uploadSpeedLimit),
+				DownloadSpeed: uint64(*o.downloadSpeedLimit),
+			},
 		},
 	}
 	if *o.add {

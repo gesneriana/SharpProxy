@@ -22,7 +22,7 @@ weight: 30
 
 其余未填的选项，用下面给出的值进行填充。
 
-*Trojan-Go支持对人类更友好的YAML语法，配置文件的基本结构与JSON相同，效果等价。不过为了遵守YAML的命名习惯，你需要把下划线("_")转换为横杠("-")，如```remote_addr```在YAML文件中为```remote-addr```*
+*Trojan-Go支持对人类更友好的YAML语法，配置文件的基本结构与JSON相同，效果等价。但是为了遵守YAML的命名习惯，你需要把下划线("_")转换为横杠("-")，如```remote_addr```在YAML文件中为```remote-addr```*
 
 ```json
 {
@@ -34,9 +34,8 @@ weight: 30
   "log_level": 1,
   "log_file": "",
   "password": [],
-  "buffer_size": 32,
-  "dns": [],
   "disable_http_check": false,
+  "udp_timeout": 60,
   "ssl": {
     "verify": true,
     "verify_hostname": true,
@@ -44,7 +43,6 @@ weight: 30
     "key": *required*,
     "key_password": "",
     "cipher": "",
-    "cipher_tls13": "",
     "curves": "",
     "prefer_server_cipher": false,
     "sni": "",
@@ -56,12 +54,12 @@ weight: 30
     "plain_http_response": "",
     "fallback_addr": "",
     "fallback_port": 0,
-    "fingerprint": "firefox",
+    "fingerprint": "firefox"
   },
   "tcp": {
     "no_delay": true,
     "keep_alive": true,
-    "prefer_ipv4": false,
+    "prefer_ipv4": false
   },
   "mux": {
     "enabled": false,
@@ -81,7 +79,7 @@ weight: 30
   "websocket": {
     "enabled": false,
     "path": "",
-    "hostname": ""
+    "host": ""
   },
   "shadowsocks": {
     "enabled": false,
@@ -112,21 +110,15 @@ weight: 30
     "password": "",
     "check_rate": 60
   },
-  "redis": {
-    "enabled": false,
-    "server_addr": "localhost",
-    "server_port": 6379,
-    "password": ""
-  },
   "api": {
     "enabled": false,
     "api_addr": "",
     "api_port": 0,
-    "api_tls": false,
     "ssl": {
-      "cert": "",
+      "enabled": false,
       "key": "",
-      "key_password": "",
+      "cert": "",
+      "verify_client": false,
       "client_cert": []
     }
   }
@@ -141,29 +133,27 @@ weight: 30
 
 对于server，```local_xxxx```对应trojan服务器监听地址（强烈建议使用443端口），```remote_xxxx```填写识别到非trojan流量时代理到的HTTP服务地址，通常填写本地80端口。
 
-```log_level```指定日志等级。等级越高，输出的信息越少，0输出Debug以上日志（所有日志），1输出Info及以上日志，2输出Warning及以上日志，3输出Error及以上信息，4输出Fatal及以上信息，5完全不输出日志。
+```log_level```指定日志等级。等级越高，输出的信息越少。合法的值有
+
+- 0 输出Debug以上日志（所有日志）
+
+- 1 输出Info及以上日志
+
+- 2 输出Warning及以上日志
+
+- 3 输出Error及以上日志
+
+- 4 输出Fatal及以上日志
+
+- 5 完全不输出日志
 
 ```log_file```指定日志输出文件路径。如果未指定则使用标准输出。
 
 ```password```可以填入多个密码。除了使用配置文件配置密码之外，trojan-go还支持使用mysql配置密码，参见下文。客户端的密码，只有与服务端配置文件中或者在数据库中的密码记录一致，才能通过服务端的校验，正常使用代理服务。
 
-```buffer_size```为单个连接缓冲区大小，单位KiB，默认32KiB。适当提升这个数值可以提升网络吞吐量和效率，但是也会增加内存消耗。对于路由器等嵌入式系统，建议根据实际情况，适当减小该数值。
+```disable_http_check```是否禁用HTTP伪装服务器可用性检查。
 
-```dns```指定trojan-go使用的DNS服务器列表，如果不指定则使用主机默认DNS。如果指定了服务器，按照列表顺序依次查询，支持UDP/TCP/DOT类型的DNS，查询结果会被缓存五分钟。使用URL格式描述服务器，例如
-
-- "udp://1.1.1.1"，基于UDP的DNS服务器，默认53端口
-
-- "udp://1.1.1.1:53"，与上一项等价
-
-- "1.1.1.1"，与上一项等价
-
-- "tcp://1.1.1.1"，基于TCP的DNS服务器，默认53端口
-
-- "dot://1.1.1.1"，基于DOT(DNS Over TLS)的DNS服务器，默认853端口
-
-使用DOT可以防止DNS请求泄露，但由于TLS的握手耗费更多时间，查询速度也会有一定的下降，请自行斟酌性能和安全性的平衡。
-
-```disable_http_check```是否禁用HTTP可用性检查。
+```udp_timeout``` UDP会话超时时间。
 
 ### ```ssl```选项
 
@@ -173,17 +163,9 @@ weight: 30
 
 服务端必须填入```cert```和```key```，对应服务器的证书和私钥文件，请注意证书是否有效/过期。如果使用权威CA签发的证书，客户端(client/nat/forward)可以不填写```cert```。如果使用自签名或者自签发的证书，应当在的```cert```处填入服务器证书文件，否则可能导致校验失败。
 
-```sni```指的是TLS客户端请求中的服务器名字段，一般和证书的Common Name相同。如果你使用let'sencrypt等机构签发的证书，这里填入你的域名。如果这一项未填，将使用```remote_addr```填充。你应当指定一个有效的SNI（和远端证书CN一致），否则客户端可能无法验证远端证书有效性从而无法连接。
+```sni```指的是TLS客户端请求中的服务器名字段，一般和证书的Common Name相同。如果你使用let'sencrypt等机构签发的证书，这里填入你的域名。对于客户端，如果这一项未填，将使用```remote_addr```填充。你应当指定一个有效的SNI（和远端证书CN一致），否则客户端可能无法验证远端证书有效性从而无法连接；对于服务端，若此项不填，则使用证书中Common Name作为SNI校验依据，支持通配符如*.example.com。
 
-```alpn```为TLS的应用层协议协商指定协议。在TLS Client/Server Hello中传输，协商应用层使用的协议，仅用作指纹伪造，并无实际作用。**如果使用了CDN，错误的alpn字段可能导致与CDN协商得到错误的应用层协议**。
-
-```prefer_server_cipher```客户端是否偏好选择服务端在协商中提供的密码学套件。
-
-```cipher```和```cipher13```指TLS使用的密码学套件。只有在你明确知道自己在做什么的情况下，才应该去填写此项以修改trojan-go使用的TLS密码学套件。**正常情况下，你应该将其留空或者不填**，trojan-go会根据当前硬件平台以及远端的情况，自动选择最合适的加密算法以提升性能和安全性。如果需要填写，密码学套件名用分号(":")分隔。Go的TLS库中弃用了TLS1.2中不安全的密码学套件，并完全支持TLS1.3。默认情况下，trojan-go将优先使用更安全的TLS1.3。
-
-```curves```指定TLS在ECDHE中偏好使用的椭圆曲线。只有你明确知道自己在做什么的情况下，才应该填写此项。曲线名称用分号(":")分隔。
-
-```fingerprint```用于指定TLS Client Hello指纹伪造类型，以抵抗GFW对于TLS Client Hello指纹的特征识别和阻断。trojan-go使用[utls](https://github.com/refraction-networking/utls)进行指纹伪造，默认伪造Firefox的指纹。合法的值有
+```fingerprint```用于指定客户端TLS Client Hello指纹伪造类型，以抵抗GFW对于TLS Client Hello指纹的特征识别和阻断。trojan-go使用[utls](https://github.com/refraction-networking/utls)进行指纹伪造，默认伪造Firefox的指纹。合法的值有
 
 - ""，不使用指纹伪造
 
@@ -193,7 +175,14 @@ weight: 30
 
 - "ios"，伪造iOS指纹
 
-一旦指纹的值被设置，```cipher```，```curves```，```alpn```，```session_ticket```等有可能影响指纹的字段将使用该指纹的特定设置覆写。
+一旦指纹的值被设置，客户端的```cipher```，```curves```，```alpn```，```session_ticket```等有可能影响指纹的字段将使用该指纹的特定设置覆写。
+```alpn```为TLS的应用层协议协商指定协议。在TLS Client/Server Hello中传输，协商应用层使用的协议，仅用作指纹伪造，并无实际作用。**如果使用了CDN，错误的alpn字段可能导致与CDN协商得到错误的应用层协议**。
+
+```prefer_server_cipher```客户端是否偏好选择服务端在协商中提供的密码学套件。
+
+```cipher```TLS使用的密码学套件。```cipher13``字段与此字段合并。只有在你明确知道自己在做什么的情况下，才应该去填写此项以修改trojan-go使用的TLS密码学套件。**正常情况下，你应该将其留空或者不填**，trojan-go会根据当前硬件平台以及远端的情况，自动选择最合适的加密算法以提升性能和安全性。如果需要填写，密码学套件名用分号(":")分隔，按优先顺序排列。Go的TLS库中弃用了TLS1.2中部分不安全的密码学套件，并完全支持TLS1.3。默认情况下，trojan-go将优先使用更安全的TLS1.3。
+
+```curves```指定TLS在ECDHE中偏好使用的椭圆曲线。只有你明确知道自己在做什么的情况下，才应该填写此项。曲线名称用分号(":")分隔，按优先顺序排列。
 
 ```plain_http_response```指服务端TLS握手失败时，明文发送的原始数据（原始TCP数据）。这个字段填入该文件路径。推荐使用```fallback_port```而不是该字段。
 
@@ -211,7 +200,7 @@ weight: 30
 
 ```concurrency```指单个TLS隧道可以承载的最大连接数，默认为8。这个数值越大，多连接并发时TLS由于握手产生的延迟就越低，但网络吞吐量可能会有所降低，填入负数或者0表示所有连接只使用一个TLS隧道承载。
 
-```idle_timeout```指TLS隧道在空闲多久之后关闭，单位为秒。如果数值为负值或0，则一旦TLS隧道空闲，则立即关闭。
+```idle_timeout```空闲超时时间。指TLS隧道在空闲多长时间之后关闭，单位为秒。如果数值为负值或0，则一旦TLS隧道空闲，则立即关闭。
 
 ### ```router```路由选项
 
@@ -245,7 +234,7 @@ weight: 30
 
 - "ip_on_demand"，域名均解析为IP，在IP列表中匹配。该策略可能导致DNS泄漏或遭到污染。
 
-```geoip```和```geosite```字段指geoip和geosite数据库文件路径，默认使用当前目录的geoip.dat和geosite.dat。
+```geoip```和```geosite```字段指geoip和geosite数据库文件路径，默认使用程序所在目录的geoip.dat和geosite.dat。也可以通过指定环境变量TROJAN_GO_LOCATION_ASSET指定工作目录。
 
 ### ```websocket```选项
 
@@ -255,11 +244,11 @@ Websocket传输是trojan-go的特性。在**正常的直接连接代理节点**�
 
 ```path```指的是Websocket使用的URL路径，必须以斜杠("/")开头，如"/longlongwebsocketpath"，并且服务器和客户端必须一致。
 
-```hostname```Websocket握手时使用的主机名，客户端如果留空则使用```remote_addr```填充。如果使用了CDN，这个选项一般填入域名。
+```host```Websocket握手时，HTTP请求中使用的主机名。客户端如果留空则使用```remote_addr```填充。如果使用了CDN，这个选项一般填入域名。不正确的```host```可能导致CDN无法转发请求。
 
 ### ``shadowsocks`` AEAD加密选项
 
-此选项用于替代弃用的混淆加密和双重TLS。如果此选项被设置启用，Trojan协议层下将插入一层Shadowsocks AEAD加密层。也即（已经加密的）TLS隧道内，所有的Trojan协议将再使用AEAD加密。注意，此选项和Websocket是否开启无关。无论Websocket是否开启，所有Trojan流量都会被再进行一次加密。
+此选项用于替代弃用的混淆加密和双重TLS。如果此选项被设置启用，Trojan协议层下将插入一层Shadowsocks AEAD加密层。也即（已经加密的）TLS隧道内，所有的Trojan协议将再使用AEAD方法进行加密。注意，此选项和Websocket是否开启无关。无论Websocket是否开启，所有Trojan流量都会被再进行一次加密。
 
 注意，开启这个选项将有可能降低传输性能，你只应该在不信任承载Trojan协议的传输信道的情况下，启用这个选项。例如：
 
@@ -317,15 +306,15 @@ Websocket传输是trojan-go的特性。在**正常的直接连接代理节点**�
 
 ### ```mysql```数据库选项
 
-trojan-go兼容trojan-gfw的基于mysql的用户管理方式，但更推荐的方式是使用API。
+trojan-go兼容trojan的基于mysql的用户管理方式，但更推荐的方式是使用API。
 
 ```enabled```表示是否启用mysql数据库进行用户验证。
 
-```check_rate```是trojan-go从MySQL获取用户数据，更新缓存的间隔时间，单位是秒。
+```check_rate```是trojan-go从MySQL获取用户数据并更新缓存的间隔时间，单位为秒。
 
 其他选项可以顾名思义，不再赘述。
 
-users表结构和trojan-gfw定义一致，下面是一个创建users表的例子。注意这里的password指的是密码经过SHA224散列之后的值（字符串），流量download, upload, quota的单位是字节。你可以通过修改数据库users表中的用户记录的方式，添加和删除用户，或者指定用户的流量配额。trojan-go会根据所有的用户流量配额，自动更新当前有效的用户列表。如果download+upload>quota，trojan-go服务器将拒绝该用户的连接。
+users表结构和trojan版本定义一致，下面是一个创建users表的例子。注意这里的password指的是密码经过SHA224散列之后的值（字符串），流量download, upload, quota的单位是字节。你可以通过修改数据库users表中的用户记录的方式，添加和删除用户，或者指定用户的流量配额。trojan-go会根据所有的用户流量配额，自动更新当前有效的用户列表。如果download+upload>quota，trojan-go服务器将拒绝该用户的连接。
 
 ```mysql
 CREATE TABLE users (
@@ -362,8 +351,14 @@ trojan-go基于gRPC提供了API，以支持服务端和客户端的管理和统�
 
 ```api_port```gRPC监听的端口。
 
-```api_tls```gRPC是否启用TLS传输（双向认证）。
+```ssl``` TLS相关设置。
 
-```ssl``` TLS相关设置，如果开启TLS传输和双向认证，所有选项为必填。其中```key```, ```cert```为API服务器使用的密钥和证书文件，```client_cert```为客户端使用的证书文件路径，用于客户端认证。
+- ```enabled```是否使用TLS传输gRPC流量。
+
+- ```key```，```cert```服务器私钥和证书。
+
+- ```verify_client```是否认证客户端证书。
+
+- ```client_cert```如果开启客户端认证，此处填入认证的客户端证书列表。
 
 警告：**不要将未开启TLS双向认证的API服务直接暴露在互联网上，否则可能导致各类安全问题。**

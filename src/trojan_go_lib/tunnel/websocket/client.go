@@ -2,12 +2,13 @@ package websocket
 
 import (
 	"context"
+	"strings"
+
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/config"
 	"github.com/p4gefau1t/trojan-go/log"
 	"github.com/p4gefau1t/trojan-go/tunnel"
 	"golang.org/x/net/websocket"
-	"strings"
 )
 
 type Client struct {
@@ -32,7 +33,8 @@ func (c *Client) DialConn(*tunnel.Address, tunnel.Tunnel) (tunnel.Conn, error) {
 		return nil, common.NewError("websocket failed to handshake with server").Base(err)
 	}
 	return &OutboundConn{
-		Conn: wsConn,
+		Conn:    wsConn,
+		tcpConn: conn,
 	}, nil
 }
 
@@ -49,13 +51,13 @@ func NewClient(ctx context.Context, underlay tunnel.Client) (*Client, error) {
 	if !strings.HasPrefix(cfg.Websocket.Path, "/") {
 		return nil, common.NewError("websocket path must start with \"/\"")
 	}
-	if cfg.Websocket.Hostname == "" {
-		cfg.Websocket.Hostname = cfg.RemoteHost
+	if cfg.Websocket.Host == "" {
+		cfg.Websocket.Host = cfg.RemoteHost
 		log.Warn("empty websocket hostname")
 	}
 	log.Debug("websocket client created")
 	return &Client{
-		hostname: cfg.Websocket.Hostname,
+		hostname: cfg.Websocket.Host,
 		path:     cfg.Websocket.Path,
 		underlay: underlay,
 	}, nil

@@ -2,12 +2,14 @@ package fingerprint
 
 import (
 	"crypto/tls"
+
 	"github.com/p4gefau1t/trojan-go/common"
 	"github.com/p4gefau1t/trojan-go/log"
 	. "github.com/refraction-networking/utls"
 )
 
 func GetClientHelloSpec(name string, websocket bool) (*ClientHelloSpec, error) {
+	// TODO fix websocket
 	var spec *ClientHelloSpec
 	switch name {
 	case "chrome":
@@ -217,7 +219,7 @@ func GetClientHelloSpec(name string, websocket bool) (*ClientHelloSpec, error) {
 		}
 	}
 	if spec == nil {
-		return nil, common.NewError("Invalid fingerprint:" + name)
+		return nil, common.NewError("invalid fingerprint:" + name)
 	}
 	if websocket {
 		for i := range spec.Extensions {
@@ -233,7 +235,7 @@ func GetClientHelloSpec(name string, websocket bool) (*ClientHelloSpec, error) {
 
 func ParseCipher(s []string) []uint16 {
 	all := tls.CipherSuites()
-	result := []uint16{}
+	var result []uint16
 	for _, p := range s {
 		found := true
 		for _, q := range all {
