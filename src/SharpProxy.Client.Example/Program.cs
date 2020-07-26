@@ -16,14 +16,20 @@ namespace SharpProxy.Client.Example
             var dir = Environment.CurrentDirectory + "/libs";
             SharpProxyTrojanGo.Start(dir);
 
-            Thread.Sleep(1000);
+
             Console.WriteLine("输入Q终止程序");
             while (true)
             {
                 var s = Console.ReadLine(); // 如果不阻塞进程,main程序退出之后golang的后台线程会被关闭
-                if (s.ToLower() == "q")
+                if (s != null && s.ToLower() == "q")
                 {
                     break;
+                }
+                else if (s == null)
+                {
+                    Console.WriteLine("标准输入流为null, 可能是被其他进程启动, 作为子进程运行.");
+                    Thread.Sleep(1000 * 60 * 60);
+                    continue;
                 }
             }
 
